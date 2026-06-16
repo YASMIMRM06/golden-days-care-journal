@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Eye, Pencil, Plus, Search, Trash2, UserPlus } from "lucide-react";
+import { Eye, Pencil, Plus, Search, Trash2, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
+
 
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -47,11 +48,27 @@ export const Route = createFileRoute("/idosos")({
   component: IdososPage,
 });
 
+type Parente = { id: string; nome: string; telefone: string; parentesco: string };
+
 function IdososPage() {
   const [query, setQuery] = useState("");
   const [dep, setDep] = useState<string>("todos");
   const [status, setStatus] = useState<string>("todos");
   const [open, setOpen] = useState(false);
+  const [parentes, setParentes] = useState<Parente[]>([
+    { id: crypto.randomUUID(), nome: "", telefone: "", parentesco: "" },
+  ]);
+
+  function addParente() {
+    setParentes((p) => [...p, { id: crypto.randomUUID(), nome: "", telefone: "", parentesco: "" }]);
+  }
+  function removeParente(id: string) {
+    setParentes((p) => (p.length > 1 ? p.filter((x) => x.id !== id) : p));
+  }
+  function updateParente(id: string, field: keyof Parente, value: string) {
+    setParentes((p) => p.map((x) => (x.id === id ? { ...x, [field]: value } : x)));
+  }
+
 
   const lista = useMemo(() => {
     return seed.filter((i) => {
@@ -139,6 +156,63 @@ function IdososPage() {
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label htmlFor="obs">Observações</Label>
                   <Textarea id="obs" placeholder="Notas relevantes..." />
+                </div>
+
+                <div className="sm:col-span-2 pt-2">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Parentes e contatos de emergência
+                    </p>
+                    <Button type="button" variant="outline" size="sm" onClick={addParente}>
+                      <Plus className="mr-1 h-3.5 w-3.5" /> Adicionar parente
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {parentes.map((p, idx) => (
+                      <div
+                        key={p.id}
+                        className="grid grid-cols-1 gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_160px_auto]"
+                      >
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Nome do parente {idx + 1}</Label>
+                          <Input
+                            value={p.nome}
+                            onChange={(e) => updateParente(p.id, "nome", e.target.value)}
+                            placeholder="Nome completo"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Telefone</Label>
+                          <Input
+                            value={p.telefone}
+                            onChange={(e) => updateParente(p.id, "telefone", e.target.value)}
+                            placeholder="(11) 90000-0000"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Parentesco</Label>
+                          <Input
+                            value={p.parentesco}
+                            onChange={(e) => updateParente(p.id, "parentesco", e.target.value)}
+                            placeholder="Ex: Filha"
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Remover parente"
+                            className="text-destructive"
+                            onClick={() => removeParente(p.id)}
+                            disabled={parentes.length === 1}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <DialogFooter className="sm:col-span-2">

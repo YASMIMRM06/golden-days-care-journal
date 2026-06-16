@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Eye, FileBarChart2, Mail, Printer } from "lucide-react";
+import { useState } from "react";
+import { Eye, FileBarChart2, Mail, Plus, Printer } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
@@ -14,6 +15,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { idosos } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/relatorios")({
@@ -26,7 +37,9 @@ export const Route = createFileRoute("/relatorios")({
   component: RelatoriosPage,
 });
 
-const tipos = [
+type RelatorioCustom = { id: string; titulo: string; desc: string };
+
+const tiposBase = [
   { id: "ocorrencias", titulo: "Ocorrências", desc: "Eventos registrados no período" },
   { id: "quedas", titulo: "Quedas", desc: "Quedas e suas circunstâncias" },
   { id: "consultas", titulo: "Consultas", desc: "Consultas realizadas e agendadas" },
@@ -34,11 +47,58 @@ const tipos = [
 ];
 
 function RelatoriosPage() {
+  const [open, setOpen] = useState(false);
+  const [customs, setCustoms] = useState<RelatorioCustom[]>([]);
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    const novo: RelatorioCustom = {
+      id: crypto.randomUUID(),
+      titulo: String(f.get("titulo") || "Relatório"),
+      desc: String(f.get("desc") || ""),
+    };
+    setCustoms((p) => [novo, ...p]);
+    setOpen(false);
+    toast.success("Relatório adicionado");
+  }
+
+  const tipos = [...customs, ...tiposBase];
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Relatórios"
         description="Gere relatórios detalhados em PDF."
+        actions={
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-1 h-4 w-4" /> Novo relatório
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Novo relatório</DialogTitle>
+                <DialogDescription>Crie um modelo de relatório personalizado.</DialogDescription>
+              </DialogHeader>
+              <form className="grid gap-4" onSubmit={handleSubmit}>
+                <div className="space-y-1.5">
+                  <Label htmlFor="titulo">Título</Label>
+                  <Input id="titulo" name="titulo" required placeholder="Ex: Acompanhamento mensal" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="desc">Descrição</Label>
+                  <Textarea id="desc" name="desc" placeholder="O que este relatório contém" />
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+                  <Button type="submit"><Plus className="mr-1 h-4 w-4" /> Adicionar</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        }
       />
 
       <Card className="shadow-soft">
@@ -69,7 +129,7 @@ function RelatoriosPage() {
             <Select defaultValue="ocorrencias">
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {tipos.map((t) => (
+                {tiposBase.map((t) => (
                   <SelectItem key={t.id} value={t.id}>{t.titulo}</SelectItem>
                 ))}
               </SelectContent>
@@ -90,12 +150,14 @@ function RelatoriosPage() {
                 <p className="truncate text-xs text-muted-foreground">{t.desc}</p>
               </div>
               <div className="flex shrink-0 gap-1">
-                <Button variant="ghost" size="icon" aria-label="Visualizar"><Eye className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" aria-label="Visualizar" onClick={() => toast.info("Abrindo prévia")}>
+                  <Eye className="h-4 w-4" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label="Exportar PDF"
-                  onClick={() => toast.success("PDF gerado")}
+                  aria-label="Imprimir"
+                  onClick={() => { toast.success("PDF gerado"); window.print(); }}
                 >
                   <Printer className="h-4 w-4" />
                 </Button>
