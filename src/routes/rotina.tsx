@@ -1,12 +1,31 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, Pencil, RotateCcw } from "lucide-react";
+import { useState } from "react";
+import { Check, Pencil, Plus, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { rotina } from "@/lib/mock-data";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { rotina as seed, type RotinaItem } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/rotina")({
   head: () => ({
@@ -26,16 +45,89 @@ const corPorCategoria: Record<string, string> = {
   Lazer: "bg-accent text-accent-foreground border-border",
 };
 
+const categorias: RotinaItem["categoria"][] = [
+  "Alimentação",
+  "Higiene",
+  "Exercícios",
+  "Terapias",
+  "Lazer",
+];
+
 function RotinaPage() {
+  const [open, setOpen] = useState(false);
+  const [lista, setLista] = useState<RotinaItem[]>(seed);
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    const novo: RotinaItem = {
+      id: crypto.randomUUID(),
+      horario: String(f.get("horario") || "08:00"),
+      atividade: String(f.get("atividade") || ""),
+      categoria: (f.get("categoria") as RotinaItem["categoria"]) || "Lazer",
+      responsavel: String(f.get("responsavel") || "—"),
+      status: "Pendente",
+    };
+    setLista((p) =>
+      [...p, novo].sort((a, b) => a.horario.localeCompare(b.horario)),
+    );
+    setOpen(false);
+    toast.success("Atividade adicionada à rotina");
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Rotina diária"
         description="Agenda de atividades e cuidados do dia."
+        actions={
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-1 h-4 w-4" /> Nova atividade
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Nova atividade</DialogTitle>
+                <DialogDescription>Adicione um item à rotina diária.</DialogDescription>
+              </DialogHeader>
+              <form className="grid grid-cols-1 gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
+                <div className="space-y-1.5">
+                  <Label htmlFor="horario">Horário</Label>
+                  <Input id="horario" name="horario" type="time" required />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Categoria</Label>
+                  <Select name="categoria" defaultValue="Alimentação">
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {categorias.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="atividade">Atividade</Label>
+                  <Input id="atividade" name="atividade" required placeholder="Ex: Caminhada no jardim" />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="responsavel">Responsável</Label>
+                  <Input id="responsavel" name="responsavel" placeholder="Nome do responsável" />
+                </div>
+                <DialogFooter className="sm:col-span-2">
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+                  <Button type="submit"><Plus className="mr-1 h-4 w-4" /> Adicionar</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        }
       />
 
       <div className="space-y-3">
-        {rotina.map((r) => (
+        {lista.map((r) => (
           <Card key={r.id} className="shadow-soft">
             <CardContent className="grid grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-4 p-4 sm:grid-cols-[80px_minmax(0,1fr)_auto]">
               <div className="text-center">

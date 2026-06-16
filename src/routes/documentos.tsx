@@ -1,6 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Download, FileText, Grid3x3, List, Trash2, Upload } from "lucide-react";
+import { useRef, useState } from "react";
+import {
+  Download,
+  Eye,
+  FileText,
+  Grid3x3,
+  List,
+  Mail,
+  Printer,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
@@ -8,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { documentos } from "@/lib/mock-data";
+import { documentos as seed, type Documento } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/documentos")({
   head: () => ({
@@ -20,9 +30,49 @@ export const Route = createFileRoute("/documentos")({
   component: DocumentosPage,
 });
 
+function formatSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function DocumentosPage() {
   const [view, setView] = useState<"lista" | "grade">("grade");
   const [drag, setDrag] = useState(false);
+  const [lista, setLista] = useState<Documento[]>(seed);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function addFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const novos: Documento[] = Array.from(files).map((f) => ({
+      id: crypto.randomUUID(),
+      nome: f.name,
+      categoria: "Receitas",
+      tamanho: formatSize(f.size),
+      data: new Date().toISOString().slice(0, 10),
+      idoso: "—",
+    }));
+    setLista((p) => [...novos, ...p]);
+    toast.success(`${novos.length} arquivo(s) enviado(s)`);
+  }
+
+  function handlePrint(d: Documento) {
+    toast.success(`Imprimindo ${d.nome}`);
+    window.print();
+  }
+
+  function handleSend(d: Documento) {
+    toast.success(`${d.nome} enviado por e-mail`);
+  }
+
+  function handleView(d: Documento) {
+    toast.info(`Abrindo ${d.nome}`);
+  }
+
+  function handleDelete(id: string) {
+    setLista((p) => p.filter((d) => d.id !== id));
+    toast.success("Documento removido");
+  }
 
   return (
     <div className="space-y-6">
@@ -39,15 +89,27 @@ function DocumentosPage() {
         }
       />
 
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          addFiles(e.target.files);
+          e.target.value = "";
+        }}
+      />
+
       <Card
         onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
         onDragLeave={() => setDrag(false)}
         onDrop={(e) => {
           e.preventDefault();
           setDrag(false);
-          toast.success("Arquivo enviado com sucesso");
+          addFiles(e.dataTransfer.files);
         }}
-        className={"border-2 border-dashed shadow-soft transition-colors " + (drag ? "border-primary bg-primary/5" : "")}
+        onClick={() => inputRef.current?.click()}
+        className={"cursor-pointer border-2 border-dashed shadow-soft transition-colors " + (drag ? "border-primary bg-primary/5" : "")}
       >
         <CardContent className="flex flex-col items-center justify-center gap-3 px-6 py-10 text-center">
           <div className="grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
@@ -57,7 +119,15 @@ function DocumentosPage() {
             <p className="font-semibold">Arraste arquivos aqui</p>
             <p className="text-sm text-muted-foreground">ou clique para selecionar do seu dispositivo</p>
           </div>
-          <Button variant="outline"><Upload className="mr-1 h-4 w-4" /> Selecionar arquivo</Button>
+          <Button
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              inputRef.current?.click();
+            }}
+          >
+            <Upload className="mr-1 h-4 w-4" /> Selecionar arquivo
+          </Button>
         </CardContent>
       </Card>
 
@@ -71,7 +141,7 @@ function DocumentosPage() {
 
       {view === "grade" ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {documentos.map((d) => (
+          {lista.map((d) => (
             <Card key={d.id} className="shadow-soft">
               <CardContent className="p-4">
                 <div className="grid h-24 place-items-center rounded-lg bg-muted">
@@ -85,11 +155,23 @@ function DocumentosPage() {
                     <span className="text-xs text-muted-foreground">{d.tamanho}</span>
                   </div>
                 </div>
-                <div className="mt-3 flex gap-1">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Download className="mr-1 h-3.5 w-3.5" /> Baixar
+                <div className="mt-3 grid grid-cols-4 gap-1">
+                  <Button variant="ghost" size="icon" aria-label="Visualizar" onClick={() => handleView(d)}>
+                    <Eye className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" aria-label="Excluir" className="text-destructive">
+                  <Button variant="ghost" size="icon" aria-label="Enviar" onClick={() => handleSend(d)}>
+                    <Mail className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" aria-label="Imprimir" onClick={() => handlePrint(d)}>
+                    <Printer className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Excluir"
+                    className="text-destructive"
+                    onClick={() => handleDelete(d.id)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -101,7 +183,7 @@ function DocumentosPage() {
         <Card className="shadow-soft">
           <CardContent className="p-0">
             <ul className="divide-y">
-              {documentos.map((d) => (
+              {lista.map((d) => (
                 <li key={d.id} className="flex items-center gap-3 p-3">
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-muted">
                     <FileText className="h-5 w-5 text-muted-foreground" />
@@ -112,8 +194,25 @@ function DocumentosPage() {
                   </div>
                   <Badge variant="secondary" className="hidden sm:inline-flex">{d.categoria}</Badge>
                   <span className="hidden text-xs text-muted-foreground sm:inline">{d.tamanho}</span>
-                  <Button variant="ghost" size="icon" aria-label="Baixar"><Download className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" aria-label="Excluir" className="text-destructive">
+                  <Button variant="ghost" size="icon" aria-label="Visualizar" onClick={() => handleView(d)}>
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" aria-label="Enviar" onClick={() => handleSend(d)}>
+                    <Mail className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" aria-label="Imprimir" onClick={() => handlePrint(d)}>
+                    <Printer className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" aria-label="Baixar" onClick={() => toast.success("Download iniciado")}>
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Excluir"
+                    className="text-destructive"
+                    onClick={() => handleDelete(d.id)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </li>

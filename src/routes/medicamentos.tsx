@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { Bell, Pill, Plus } from "lucide-react";
+import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -13,7 +15,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { medicamentos } from "@/lib/mock-data";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { idosos, medicamentos as seed, type Medicamento } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/medicamentos")({
   head: () => ({
@@ -35,15 +55,95 @@ const timeline = [
 ];
 
 function MedicamentosPage() {
+  const [open, setOpen] = useState(false);
+  const [lista, setLista] = useState<Medicamento[]>(seed);
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    const horarios = String(f.get("horarios") || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const novo: Medicamento = {
+      id: crypto.randomUUID(),
+      nome: String(f.get("nome") || ""),
+      dosagem: String(f.get("dosagem") || ""),
+      frequencia: String(f.get("frequencia") || ""),
+      horarios,
+      via: String(f.get("via") || "Oral"),
+      status: "Ativo",
+      idoso: String(f.get("idoso") || ""),
+    };
+    setLista((p) => [novo, ...p]);
+    setOpen(false);
+    toast.success("Medicamento cadastrado");
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Medicamentos"
         description="Prescrições ativas e controle de administração."
         actions={
-          <Button>
-            <Plus className="mr-1 h-4 w-4" /> Novo medicamento
-          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-1 h-4 w-4" /> Novo medicamento
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Cadastrar medicamento</DialogTitle>
+                <DialogDescription>Adicione uma prescrição ao plano de medicação.</DialogDescription>
+              </DialogHeader>
+              <form className="grid grid-cols-1 gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label>Idoso</Label>
+                  <Select name="idoso" required>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {idosos.map((i) => (
+                        <SelectItem key={i.id} value={i.nome}>{i.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="nome">Medicamento</Label>
+                  <Input id="nome" name="nome" required placeholder="Ex: Losartana" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="dosagem">Dosagem</Label>
+                  <Input id="dosagem" name="dosagem" required placeholder="Ex: 50mg" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="frequencia">Frequência</Label>
+                  <Input id="frequencia" name="frequencia" placeholder="Ex: 12/12h" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="via">Via</Label>
+                  <Select name="via" defaultValue="Oral">
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Oral">Oral</SelectItem>
+                      <SelectItem value="Subcutânea">Subcutânea</SelectItem>
+                      <SelectItem value="Intramuscular">Intramuscular</SelectItem>
+                      <SelectItem value="Tópica">Tópica</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="horarios">Horários (separados por vírgula)</Label>
+                  <Input id="horarios" name="horarios" placeholder="08:00, 20:00" />
+                </div>
+                <DialogFooter className="sm:col-span-2">
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+                  <Button type="submit"><Plus className="mr-1 h-4 w-4" /> Cadastrar</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         }
       />
 
@@ -81,7 +181,7 @@ function MedicamentosPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {medicamentos.map((m) => (
+                {lista.map((m) => (
                   <TableRow key={m.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
