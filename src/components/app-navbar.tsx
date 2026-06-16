@@ -1,3 +1,4 @@
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Bell, LogOut, Search, User } from "lucide-react";
 import { toast } from "sonner";
 
@@ -14,8 +15,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { roleLabels, useAuth } from "@/lib/auth-context";
 
 export function AppNavbar() {
+  const { profile, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  async function handleSignOut() {
+    await signOut();
+    toast.success("Sessão encerrada");
+    navigate({ to: "/sobre" });
+  }
+
+  const initials = (profile?.full_name || profile?.email || "EU")
+    .split(" ")
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b bg-card/80 px-3 backdrop-blur sm:gap-4 sm:px-6">
       <SidebarTrigger className="shrink-0" />
@@ -64,22 +82,28 @@ export function AppNavbar() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="gap-2 px-1.5 sm:px-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="https://i.pravatar.cc/80?img=5" alt="Perfil" />
-                <AvatarFallback>EU</AvatarFallback>
+                <AvatarImage src={profile?.avatar_url ?? undefined} alt="Perfil" />
+                <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
               <div className="hidden text-left sm:block">
-                <p className="text-xs font-medium leading-tight">Enf. Júlia Costa</p>
-                <p className="text-[10px] text-muted-foreground">Administradora</p>
+                <p className="text-xs font-medium leading-tight">
+                  {profile?.full_name || profile?.email || "Conta"}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {profile ? roleLabels[profile.role] : ""}
+                </p>
               </div>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuLabel>Minha conta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" /> Perfil
+            <DropdownMenuItem asChild>
+              <Link to="/perfil" className="flex w-full items-center">
+                <User className="mr-2 h-4 w-4" /> Perfil
+              </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => toast.success("Sessão encerrada")}>
+            <DropdownMenuItem onClick={handleSignOut}>
               <LogOut className="mr-2 h-4 w-4" /> Sair
             </DropdownMenuItem>
           </DropdownMenuContent>
