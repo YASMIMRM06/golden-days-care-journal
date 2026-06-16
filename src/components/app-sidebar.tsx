@@ -12,6 +12,7 @@ import {
   CalendarDays,
   Settings,
   HeartPulse,
+  ShieldCheck,
 } from "lucide-react";
 
 import {
@@ -26,6 +27,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/lib/auth-context";
 
 const mainItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -46,6 +48,7 @@ const bottomItems = [
 
 export function AppSidebar() {
   const { state } = useSidebar();
+  const { isAdmin } = useAuth();
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -61,8 +64,8 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold leading-tight">CareSenior</p>
-              <p className="truncate text-xs text-muted-foreground">Gestão de cuidados</p>
+              <p className="truncate text-sm font-bold leading-tight">SAMI</p>
+              <p className="truncate text-xs text-muted-foreground">Acompanhamento de idosos</p>
             </div>
           )}
         </Link>
@@ -86,6 +89,28 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administração</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive("/admin/usuarios")}
+                    tooltip="Usuários"
+                  >
+                    <Link to="/admin/usuarios" className="flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 shrink-0" />
+                      <span className="truncate">Usuários</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
