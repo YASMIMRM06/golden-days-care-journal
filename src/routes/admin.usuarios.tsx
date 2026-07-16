@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Check, ShieldAlert, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Check, KeyRound, Search, ShieldAlert, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -55,8 +56,10 @@ const cargos: AppRole[] = [
 ];
 
 function AdminUsuariosPage() {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin, loading, user } = useAuth();
   const [filter, setFilter] = useState<ApprovalStatus | "all">("pending");
+  const [roleFilter, setRoleFilter] = useState<AppRole | "all">("all");
+  const [query, setQuery] = useState("");
   const [list, setList] = useState<Profile[]>([]);
   const [fetching, setFetching] = useState(false);
 
@@ -115,7 +118,32 @@ function AdminUsuariosPage() {
     load();
   }
 
-  const filtered = filter === "all" ? list : list.filter((p) => p.status === filter);
+  async function resetPassword(p: Profile) {
+    const { error } = await supabase.auth.resetPasswordForEmail(p.email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`E-mail de redefinição enviado para ${p.email}`);
+  }
+
+  const filtered = useMemo(() => {
+    return list.filter((p) => {
+      if (filter !== "all" && p.status !== filter) return false;
+      if (roleFilter !== "all" && p.role !== roleFilter) return false;
+      if (query) {
+        const q = query.toLowerCase();
+        if (
+          !(p.full_name || "").toLowerCase().includes(q) &&
+          !p.email.toLowerCase().includes(q)
+        )
+          return false;
+      }
+      return true;
+    });
+  }, [list, filter, roleFilter, query]);
 
   return (
     <div className="space-y-6">
@@ -136,6 +164,27 @@ function AdminUsuariosPage() {
 
       <Card className="shadow-soft">
         <CardContent className="p-4 sm:p-6">
+          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_200px]">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar por nome ou e-mail..."
+                className="pl-9"
+              />
+            </div>
+            <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as AppRole | "all")}>
+              <SelectTrigger><SelectValue placeholder="Cargo" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os cargos</SelectItem>
+                {cargos.map((c) => (
+                  <SelectItem key={c} value={c}>{roleLabels[c]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="overflow-x-auto rounded-lg border">
             <Table>
               <TableHeader>
@@ -161,76 +210,101 @@ function AdminUsuariosPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filtered.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-9 w-9">
-                            <AvatarFallback>
-                              {(p.full_name || p.email).slice(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium">{p.full_name || "—"}</p>
-                            <p className="truncate text-xs text-muted-foreground">{p.email}</p>
+                  filtered.map((p) => {
+                    const isSelf = p.id === user?.id;
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-9 w-9">
+                              <AvatarFallback>
+                                {(p.full_name || p.email).slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <p className="flex items-center gap-1.5 truncate text-sm font-medium">
+                                {p.full_name || "—"}
+                                {isSelf && (
+                                  <span title="Você (master)" className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                                    <ShieldCheck className="h-3 w-3" /> Master
+                                  </span>
+                                )}
+                              </p>
+                              <p className="truncate text-xs text-muted-foreground">{p.email}</p>
+                            </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm">{p.phone || "—"}</TableCell>
-                      <TableCell>
-                        <Select
-                          value={p.role}
-                          onValueChange={(v) => updateRole(p, v as AppRole)}
-                        >
-                          <SelectTrigger className="h-8 w-[160px]"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {cargos.map((c) => (
-                              <SelectItem key={c} value={c}>{roleLabels[c]}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            p.status === "approved"
-                              ? "default"
-                              : p.status === "rejected"
-                              ? "destructive"
-                              : "outline"
-                          }
-                        >
-                          {statusLabels[p.status]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          {p.status !== "approved" && (
+                        </TableCell>
+                        <TableCell className="text-sm">{p.phone || "—"}</TableCell>
+                        <TableCell>
+                          <Select
+                            value={p.role}
+                            onValueChange={(v) => updateRole(p, v as AppRole)}
+                            disabled={isSelf}
+                          >
+                            <SelectTrigger className="h-8 w-[160px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {cargos.map((c) => (
+                                <SelectItem key={c} value={c}>{roleLabels[c]}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              p.status === "approved"
+                                ? "default"
+                                : p.status === "rejected"
+                                ? "destructive"
+                                : "outline"
+                            }
+                          >
+                            {statusLabels[p.status]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
-                              aria-label="Aprovar"
-                              className="text-success"
-                              onClick={() => updateStatus(p, "approved")}
+                              aria-label="Redefinir senha"
+                              title="Enviar e-mail para redefinir senha"
+                              onClick={() => resetPassword(p)}
                             >
-                              <Check className="h-4 w-4" />
+                              <KeyRound className="h-4 w-4" />
                             </Button>
-                          )}
-                          {p.status !== "rejected" && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              aria-label="Rejeitar"
-                              className="text-destructive"
-                              onClick={() => updateStatus(p, "rejected")}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                            {!isSelf && p.status !== "approved" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Aprovar"
+                                className="text-success"
+                                onClick={() => updateStatus(p, "approved")}
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {!isSelf && p.status !== "rejected" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Rejeitar"
+                                className="text-destructive"
+                                onClick={() => updateStatus(p, "rejected")}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {isSelf && (
+                              <span className="px-2 text-xs text-muted-foreground">
+                                Conta master protegida
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
