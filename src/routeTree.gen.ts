@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as RotinaRouteImport } from './routes/rotina'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OcorrenciasRouteImport } from './routes/ocorrencias'
@@ -33,6 +34,11 @@ const SobreRoute = SobreRouteImport.update({
 const RotinaRoute = RotinaRouteImport.update({
   id: '/rotina',
   path: '/rotina',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RelatoriosRoute = RelatoriosRouteImport.update({
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/ocorrencias': typeof OcorrenciasRoute
   '/perfil': typeof PerfilRoute
   '/relatorios': typeof RelatoriosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/rotina': typeof RotinaRoute
   '/sobre': typeof SobreRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/ocorrencias': typeof OcorrenciasRoute
   '/perfil': typeof PerfilRoute
   '/relatorios': typeof RelatoriosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/rotina': typeof RotinaRoute
   '/sobre': typeof SobreRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/ocorrencias': typeof OcorrenciasRoute
   '/perfil': typeof PerfilRoute
   '/relatorios': typeof RelatoriosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/rotina': typeof RotinaRoute
   '/sobre': typeof SobreRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/ocorrencias'
     | '/perfil'
     | '/relatorios'
+    | '/reset-password'
     | '/rotina'
     | '/sobre'
     | '/admin/usuarios'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/ocorrencias'
     | '/perfil'
     | '/relatorios'
+    | '/reset-password'
     | '/rotina'
     | '/sobre'
     | '/admin/usuarios'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/ocorrencias'
     | '/perfil'
     | '/relatorios'
+    | '/reset-password'
     | '/rotina'
     | '/sobre'
     | '/admin/usuarios'
@@ -220,6 +232,7 @@ export interface RootRouteChildren {
   OcorrenciasRoute: typeof OcorrenciasRoute
   PerfilRoute: typeof PerfilRoute
   RelatoriosRoute: typeof RelatoriosRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   RotinaRoute: typeof RotinaRoute
   SobreRoute: typeof SobreRoute
   AdminUsuariosRoute: typeof AdminUsuariosRoute
@@ -239,6 +252,13 @@ declare module '@tanstack/react-router' {
       path: '/rotina'
       fullPath: '/rotina'
       preLoaderRoute: typeof RotinaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/relatorios': {
@@ -348,6 +368,7 @@ const rootRouteChildren: RootRouteChildren = {
   OcorrenciasRoute: OcorrenciasRoute,
   PerfilRoute: PerfilRoute,
   RelatoriosRoute: RelatoriosRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   RotinaRoute: RotinaRoute,
   SobreRoute: SobreRoute,
   AdminUsuariosRoute: AdminUsuariosRoute,
