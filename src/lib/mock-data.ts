@@ -74,7 +74,7 @@ export const idosos: Idoso[] = [
     grauDependencia: "Parcial",
     responsavel: "Ana Silva",
     status: "Ativo",
-    foto: "https://i.pravatar.cc/120?img=47",
+    foto: "",
     observacoes: "Hipertensa, usa óculos para leitura.",
   },
   {
@@ -88,7 +88,7 @@ export const idosos: Idoso[] = [
     grauDependencia: "Independente",
     responsavel: "Pedro Oliveira",
     status: "Ativo",
-    foto: "https://i.pravatar.cc/120?img=12",
+    foto: "",
   },
   {
     id: "3",
@@ -101,7 +101,7 @@ export const idosos: Idoso[] = [
     grauDependencia: "Total",
     responsavel: "Carlos Pereira",
     status: "Internado",
-    foto: "https://i.pravatar.cc/120?img=32",
+    foto: "",
     observacoes: "Mobilidade reduzida, acamada.",
   },
   {
@@ -115,7 +115,7 @@ export const idosos: Idoso[] = [
     grauDependencia: "Independente",
     responsavel: "Marta Rodrigues",
     status: "Ativo",
-    foto: "https://i.pravatar.cc/120?img=15",
+    foto: "",
   },
   {
     id: "5",
@@ -128,7 +128,7 @@ export const idosos: Idoso[] = [
     grauDependencia: "Parcial",
     responsavel: "Beatriz Fernandes",
     status: "Ativo",
-    foto: "https://i.pravatar.cc/120?img=49",
+    foto: "",
   },
 ];
 
