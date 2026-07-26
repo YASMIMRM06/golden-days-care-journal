@@ -6,6 +6,7 @@ import {
   FileText,
   Grid3x3,
   List,
+  Lock,
   Mail,
   Printer,
   Trash2,
@@ -18,7 +19,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { documentos as seed, type Documento } from "@/lib/mock-data";
+
+const DELETE_PASSWORD = "sami2026";
 
 export const Route = createFileRoute("/documentos")({
   head: () => ({
@@ -40,6 +53,9 @@ function DocumentosPage() {
   const [view, setView] = useState<"lista" | "grade">("grade");
   const [drag, setDrag] = useState(false);
   const [lista, setLista] = useState<Documento[]>(seed);
+  const [pendingDelete, setPendingDelete] = useState<Documento | null>(null);
+  const [senha, setSenha] = useState("");
+  const [erroSenha, setErroSenha] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   function addFiles(files: FileList | null) {
@@ -69,9 +85,24 @@ function DocumentosPage() {
     toast.info(`Abrindo ${d.nome}`);
   }
 
-  function handleDelete(id: string) {
-    setLista((p) => p.filter((d) => d.id !== id));
+  function handleDelete(doc: Documento) {
+    setPendingDelete(doc);
+    setSenha("");
+    setErroSenha(false);
+  }
+
+  function confirmDelete(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!pendingDelete) return;
+    if (senha !== DELETE_PASSWORD) {
+      setErroSenha(true);
+      return;
+    }
+    setLista((p) => p.filter((d) => d.id !== pendingDelete.id));
     toast.success("Documento removido");
+    setPendingDelete(null);
+    setSenha("");
+    setErroSenha(false);
   }
 
   return (
