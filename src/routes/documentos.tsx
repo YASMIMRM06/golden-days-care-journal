@@ -201,7 +201,7 @@ function DocumentosPage() {
                     size="icon"
                     aria-label="Excluir"
                     className="text-destructive"
-                    onClick={() => handleDelete(d.id)}
+                    onClick={() => handleDelete(d)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -242,7 +242,7 @@ function DocumentosPage() {
                     size="icon"
                     aria-label="Excluir"
                     className="text-destructive"
-                    onClick={() => handleDelete(d.id)}
+                    onClick={() => handleDelete(d)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
