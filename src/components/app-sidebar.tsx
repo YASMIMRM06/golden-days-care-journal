@@ -13,6 +13,7 @@ import {
   Settings,
   HeartPulse,
   ShieldCheck,
+  Bell,
 } from "lucide-react";
 
 import {
@@ -40,6 +41,7 @@ const mainItems = [
   { title: "Relatórios", url: "/relatorios", icon: FileBarChart2 },
   { title: "Consultas", url: "/consultas", icon: Stethoscope },
   { title: "Calendário", url: "/calendario", icon: CalendarDays },
+  { title: "Notificações", url: "/notificacoes", icon: Bell },
 ];
 
 const bottomItems = [

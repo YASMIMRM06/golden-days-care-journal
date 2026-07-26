@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, LogOut, Search, User } from "lucide-react";
+import { Bell, Check, CheckCheck, LogOut, Search, User } from "lucide-react";
 import { toast } from "sonner";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -16,10 +16,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { roleLabels, useAuth } from "@/lib/auth-context";
+import { formatNotifDate, useNotifications } from "@/lib/notifications-context";
+import { cn } from "@/lib/utils";
 
 export function AppNavbar() {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const { notificacoes, naoLidas, marcarComoLida, marcarTodasComoLidas } = useNotifications();
 
   async function handleSignOut() {
     await signOut();
@@ -33,6 +36,8 @@ export function AppNavbar() {
     .slice(0, 2)
     .join("")
     .toUpperCase();
+
+  const preview = notificacoes.slice(0, 5);
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b bg-card/80 px-3 backdrop-blur sm:gap-4 sm:px-6">
@@ -55,25 +60,77 @@ export function AppNavbar() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" aria-label="Notificações" className="relative">
               <Bell className="h-5 w-5" />
-              <Badge className="absolute -right-0.5 -top-0.5 h-4 min-w-4 rounded-full px-1 text-[10px]">
-                3
-              </Badge>
+              {naoLidas > 0 && (
+                <Badge className="absolute -right-0.5 -top-0.5 h-4 min-w-4 rounded-full px-1 text-[10px]">
+                  {naoLidas}
+                </Badge>
+              )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>Notificações</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-96">
+            <div className="flex items-center justify-between px-2 py-1.5">
+              <DropdownMenuLabel className="p-0">Notificações</DropdownMenuLabel>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                disabled={naoLidas === 0}
+                onClick={(e) => {
+                  e.preventDefault();
+                  marcarTodasComoLidas();
+                  toast.success("Todas marcadas como lidas");
+                }}
+              >
+                <CheckCheck className="mr-1 h-3.5 w-3.5" /> Marcar todas
+              </Button>
+            </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="flex-col items-start gap-0.5">
-              <span className="text-sm font-medium">Medicamento próximo</span>
-              <span className="text-xs text-muted-foreground">Losartana — 20:00 (Maria A.)</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex-col items-start gap-0.5">
-              <span className="text-sm font-medium">Consulta hoje</span>
-              <span className="text-xs text-muted-foreground">Dr. Roberto — 09:00</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex-col items-start gap-0.5">
-              <span className="text-sm font-medium">Nova ocorrência</span>
-              <span className="text-xs text-muted-foreground">Queda registrada — Antônia P.</span>
+            {preview.length === 0 ? (
+              <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                Sem notificações
+              </div>
+            ) : (
+              preview.map((n) => (
+                <div
+                  key={n.id}
+                  className={cn(
+                    "flex items-start gap-2 px-2 py-2 text-sm",
+                    !n.lida && "bg-primary/5",
+                  )}
+                >
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className={cn(
+                        "truncate font-medium",
+                        !n.lida ? "text-primary" : "text-foreground",
+                      )}
+                    >
+                      {n.titulo}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">{n.descricao}</p>
+                    <p className="text-[10px] text-muted-foreground">{formatNotifDate(n.data)}</p>
+                  </div>
+                  {!n.lida && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-2 text-xs"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        marcarComoLida(n.id);
+                      }}
+                    >
+                      <Check className="h-3.5 w-3.5" /> OK
+                    </Button>
+                  )}
+                </div>
+              ))
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/notificacoes" className="justify-center text-sm font-medium">
+                Ver todas
+              </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

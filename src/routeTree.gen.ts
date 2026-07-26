@@ -15,6 +15,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OcorrenciasRouteImport } from './routes/ocorrencias'
+import { Route as NotificacoesRouteImport } from './routes/notificacoes'
 import { Route as MedicamentosRouteImport } from './routes/medicamentos'
 import { Route as IdososRouteImport } from './routes/idosos'
 import { Route as HistoricoRouteImport } from './routes/historico'
@@ -54,6 +55,11 @@ const PerfilRoute = PerfilRouteImport.update({
 const OcorrenciasRoute = OcorrenciasRouteImport.update({
   id: '/ocorrencias',
   path: '/ocorrencias',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificacoesRoute = NotificacoesRouteImport.update({
+  id: '/notificacoes',
+  path: '/notificacoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MedicamentosRoute = MedicamentosRouteImport.update({
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/historico': typeof HistoricoRoute
   '/idosos': typeof IdososRoute
   '/medicamentos': typeof MedicamentosRoute
+  '/notificacoes': typeof NotificacoesRoute
   '/ocorrencias': typeof OcorrenciasRoute
   '/perfil': typeof PerfilRoute
   '/relatorios': typeof RelatoriosRoute
@@ -135,6 +142,7 @@ export interface FileRoutesByTo {
   '/historico': typeof HistoricoRoute
   '/idosos': typeof IdososRoute
   '/medicamentos': typeof MedicamentosRoute
+  '/notificacoes': typeof NotificacoesRoute
   '/ocorrencias': typeof OcorrenciasRoute
   '/perfil': typeof PerfilRoute
   '/relatorios': typeof RelatoriosRoute
@@ -154,6 +162,7 @@ export interface FileRoutesById {
   '/historico': typeof HistoricoRoute
   '/idosos': typeof IdososRoute
   '/medicamentos': typeof MedicamentosRoute
+  '/notificacoes': typeof NotificacoesRoute
   '/ocorrencias': typeof OcorrenciasRoute
   '/perfil': typeof PerfilRoute
   '/relatorios': typeof RelatoriosRoute
@@ -174,6 +183,7 @@ export interface FileRouteTypes {
     | '/historico'
     | '/idosos'
     | '/medicamentos'
+    | '/notificacoes'
     | '/ocorrencias'
     | '/perfil'
     | '/relatorios'
@@ -192,6 +202,7 @@ export interface FileRouteTypes {
     | '/historico'
     | '/idosos'
     | '/medicamentos'
+    | '/notificacoes'
     | '/ocorrencias'
     | '/perfil'
     | '/relatorios'
@@ -210,6 +221,7 @@ export interface FileRouteTypes {
     | '/historico'
     | '/idosos'
     | '/medicamentos'
+    | '/notificacoes'
     | '/ocorrencias'
     | '/perfil'
     | '/relatorios'
@@ -229,6 +241,7 @@ export interface RootRouteChildren {
   HistoricoRoute: typeof HistoricoRoute
   IdososRoute: typeof IdososRoute
   MedicamentosRoute: typeof MedicamentosRoute
+  NotificacoesRoute: typeof NotificacoesRoute
   OcorrenciasRoute: typeof OcorrenciasRoute
   PerfilRoute: typeof PerfilRoute
   RelatoriosRoute: typeof RelatoriosRoute
@@ -280,6 +293,13 @@ declare module '@tanstack/react-router' {
       path: '/ocorrencias'
       fullPath: '/ocorrencias'
       preLoaderRoute: typeof OcorrenciasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notificacoes': {
+      id: '/notificacoes'
+      path: '/notificacoes'
+      fullPath: '/notificacoes'
+      preLoaderRoute: typeof NotificacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/medicamentos': {
@@ -365,6 +385,7 @@ const rootRouteChildren: RootRouteChildren = {
   HistoricoRoute: HistoricoRoute,
   IdososRoute: IdososRoute,
   MedicamentosRoute: MedicamentosRoute,
+  NotificacoesRoute: NotificacoesRoute,
   OcorrenciasRoute: OcorrenciasRoute,
   PerfilRoute: PerfilRoute,
   RelatoriosRoute: RelatoriosRoute,
@@ -376,13 +397,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
