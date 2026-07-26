@@ -252,6 +252,59 @@ function DocumentosPage() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog
+        open={!!pendingDelete}
+        onOpenChange={(o) => {
+          if (!o) {
+            setPendingDelete(null);
+            setSenha("");
+            setErroSenha(false);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="h-4 w-4 text-destructive" /> Confirmar exclusão
+            </DialogTitle>
+            <DialogDescription>
+              Para excluir <strong>{pendingDelete?.nome}</strong> informe a senha especial de segurança.
+            </DialogDescription>
+          </DialogHeader>
+          <form className="grid gap-3" onSubmit={confirmDelete}>
+            <div className="space-y-1.5">
+              <Label htmlFor="senha-excluir">Senha especial</Label>
+              <Input
+                id="senha-excluir"
+                type="password"
+                value={senha}
+                onChange={(e) => {
+                  setSenha(e.target.value);
+                  setErroSenha(false);
+                }}
+                autoFocus
+                placeholder="Digite a senha"
+              />
+              {erroSenha && (
+                <p className="text-xs text-destructive">Senha incorreta. Tente novamente.</p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPendingDelete(null)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" variant="destructive">
+                <Trash2 className="mr-1 h-4 w-4" /> Excluir
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
