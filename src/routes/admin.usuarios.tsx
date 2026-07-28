@@ -1,6 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Check, KeyRound, Search, ShieldAlert, ShieldCheck, X } from "lucide-react";
+import {
+  Check,
+  CheckCheck,
+  Copy,
+  Download,
+  KeyRound,
+  Mail,
+  Search,
+  ShieldAlert,
+  ShieldCheck,
+  UserCheck,
+  UserCog,
+  UserX,
+  Users,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
@@ -25,6 +40,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import {
   roleLabels,
@@ -55,19 +80,23 @@ const cargos: AppRole[] = [
   "nutricionista",
 ];
 
+type SortKey = "recent" | "name" | "role" | "status";
+
 function AdminUsuariosPage() {
   const { isAdmin, loading, user } = useAuth();
   const [filter, setFilter] = useState<ApprovalStatus | "all">("pending");
   const [roleFilter, setRoleFilter] = useState<AppRole | "all">("all");
+  const [sort, setSort] = useState<SortKey>("recent");
   const [query, setQuery] = useState("");
   const [list, setList] = useState<Profile[]>([]);
   const [fetching, setFetching] = useState(false);
+  const [confirmBulk, setConfirmBulk] = useState<null | "approve" | "reject">(null);
 
   async function load() {
     setFetching(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select("id,email,full_name,phone,role,status,avatar_url")
+      .select("id,email,full_name,phone,role,status,avatar_url,created_at")
       .order("created_at", { ascending: false });
     setFetching(false);
     if (error) {
@@ -129,21 +158,96 @@ function AdminUsuariosPage() {
     toast.success(`E-mail de redefinição enviado para ${p.email}`);
   }
 
+  async function bulkUpdate(status: ApprovalStatus) {
+    const pendingIds = list
+      .filter((p) => p.status === "pending" && p.id !== user?.id)
+      .map((p) => p.id);
+    if (pendingIds.length === 0) {
+      toast.info("Nenhum cadastro pendente");
+      return;
+    }
+    const { error } = await supabase
+      .from("profiles")
+      .update({ status })
+      .in("id", pendingIds);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(
+      `${pendingIds.length} ${pendingIds.length === 1 ? "usuário" : "usuários"} ${
+        status === "approved" ? "aprovados" : "rejeitados"
+      }`,
+    );
+    load();
+  }
+
+  function copyEmail(email: string) {
+    navigator.clipboard.writeText(email).then(
+      () => toast.success("E-mail copiado"),
+      () => toast.error("Falha ao copiar"),
+    );
+  }
+
+  function exportCsv() {
+    const header = ["Nome", "E-mail", "Telefone", "Cargo", "Status"];
+    const rows = filtered.map((p) => [
+      p.full_name || "",
+      p.email,
+      p.phone || "",
+      roleLabels[p.role],
+      statusLabels[p.status],
+    ]);
+    const csv = [header, ...rows]
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `sami-usuarios-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("CSV exportado");
+  }
+
+  const stats = useMemo(() => {
+    return {
+      total: list.length,
+      pending: list.filter((p) => p.status === "pending").length,
+      approved: list.filter((p) => p.status === "approved").length,
+      rejected: list.filter((p) => p.status === "rejected").length,
+    };
+  }, [list]);
+
   const filtered = useMemo(() => {
-    return list.filter((p) => {
+    const items = list.filter((p) => {
       if (filter !== "all" && p.status !== filter) return false;
       if (roleFilter !== "all" && p.role !== roleFilter) return false;
       if (query) {
         const q = query.toLowerCase();
         if (
           !(p.full_name || "").toLowerCase().includes(q) &&
-          !p.email.toLowerCase().includes(q)
+          !p.email.toLowerCase().includes(q) &&
+          !(p.phone || "").toLowerCase().includes(q)
         )
           return false;
       }
       return true;
     });
-  }, [list, filter, roleFilter, query]);
+    const sorted = [...items];
+    if (sort === "name") sorted.sort((a, b) => (a.full_name || a.email).localeCompare(b.full_name || b.email));
+    else if (sort === "role") sorted.sort((a, b) => a.role.localeCompare(b.role));
+    else if (sort === "status") sorted.sort((a, b) => a.status.localeCompare(b.status));
+    return sorted;
+  }, [list, filter, roleFilter, query, sort]);
+
+  const statCards = [
+    { label: "Total", value: stats.total, icon: Users, color: "text-primary bg-primary/10" },
+    { label: "Pendentes", value: stats.pending, icon: UserCog, color: "text-amber-600 bg-amber-100 dark:bg-amber-500/15" },
+    { label: "Aprovados", value: stats.approved, icon: UserCheck, color: "text-emerald-600 bg-emerald-100 dark:bg-emerald-500/15" },
+    { label: "Rejeitados", value: stats.rejected, icon: UserX, color: "text-destructive bg-destructive/10" },
+  ];
 
   return (
     <div className="space-y-6">
@@ -151,26 +255,60 @@ function AdminUsuariosPage() {
         title="Gestão de usuários"
         description="Aprove novos cadastros e gerencie cargos da equipe."
         actions={
-          <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
-            <TabsList>
-              <TabsTrigger value="pending">Pendentes</TabsTrigger>
-              <TabsTrigger value="approved">Aprovados</TabsTrigger>
-              <TabsTrigger value="rejected">Rejeitados</TabsTrigger>
-              <TabsTrigger value="all">Todos</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={exportCsv}>
+              <Download className="mr-1.5 h-4 w-4" /> Exportar CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setConfirmBulk("approve")}
+              disabled={stats.pending === 0}
+            >
+              <CheckCheck className="mr-1.5 h-4 w-4" /> Aprovar pendentes
+            </Button>
+          </div>
         }
       />
 
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {statCards.map((s) => (
+          <Card key={s.label} className="shadow-soft">
+            <CardContent className="flex items-center gap-3 p-4">
+              <div className={`grid h-10 w-10 place-items-center rounded-lg ${s.color}`}>
+                <s.icon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">{s.label}</p>
+                <p className="text-xl font-semibold">{s.value}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
       <Card className="shadow-soft">
         <CardContent className="p-4 sm:p-6">
-          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_200px]">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+              <TabsList>
+                <TabsTrigger value="pending">
+                  Pendentes {stats.pending > 0 && <Badge className="ml-1.5 h-5 px-1.5" variant="secondary">{stats.pending}</Badge>}
+                </TabsTrigger>
+                <TabsTrigger value="approved">Aprovados</TabsTrigger>
+                <TabsTrigger value="rejected">Rejeitados</TabsTrigger>
+                <TabsTrigger value="all">Todos</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
+          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_180px_180px]">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Buscar por nome ou e-mail..."
+                placeholder="Buscar por nome, e-mail ou telefone..."
                 className="pl-9"
               />
             </div>
@@ -183,6 +321,19 @@ function AdminUsuariosPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+              <SelectTrigger><SelectValue placeholder="Ordenar" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Mais recentes</SelectItem>
+                <SelectItem value="name">Nome (A-Z)</SelectItem>
+                <SelectItem value="role">Cargo</SelectItem>
+                <SelectItem value="status">Status</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
+            <span>{filtered.length} {filtered.length === 1 ? "resultado" : "resultados"}</span>
           </div>
 
           <div className="overflow-x-auto rounded-lg border">
@@ -230,7 +381,16 @@ function AdminUsuariosPage() {
                                   </span>
                                 )}
                               </p>
-                              <p className="truncate text-xs text-muted-foreground">{p.email}</p>
+                              <button
+                                type="button"
+                                onClick={() => copyEmail(p.email)}
+                                className="group flex items-center gap-1 truncate text-xs text-muted-foreground hover:text-primary"
+                                title="Copiar e-mail"
+                              >
+                                <Mail className="h-3 w-3" />
+                                <span className="truncate">{p.email}</span>
+                                <Copy className="h-3 w-3 opacity-0 group-hover:opacity-100" />
+                              </button>
                             </div>
                           </div>
                         </TableCell>
@@ -311,6 +471,28 @@ function AdminUsuariosPage() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={confirmBulk !== null} onOpenChange={(v) => !v && setConfirmBulk(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Aprovar todos os pendentes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {stats.pending} {stats.pending === 1 ? "usuário será aprovado" : "usuários serão aprovados"} de uma vez. Esta ação não pode ser desfeita em lote.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmBulk) bulkUpdate(confirmBulk === "approve" ? "approved" : "rejected");
+                setConfirmBulk(null);
+              }}
+            >
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
