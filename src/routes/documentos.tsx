@@ -288,6 +288,70 @@ function DocumentosPage() {
         </Card>
       )}
 
+      <Dialog open={pendentes.length > 0} onOpenChange={(o) => { if (!o) setPendentes([]); }}>
+        <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Configurar upload</DialogTitle>
+            <DialogDescription>
+              Escolha o idoso, renomeie o arquivo e defina o tipo de documento.
+            </DialogDescription>
+          </DialogHeader>
+          <form className="grid gap-4" onSubmit={confirmUpload}>
+            {pendentes.map((p, i) => (
+              <div key={i} className="grid gap-3 rounded-lg border p-3">
+                <p className="truncate text-xs text-muted-foreground">
+                  {p.file.name} • {formatSize(p.file.size)}
+                </p>
+                <div className="space-y-1.5">
+                  <Label htmlFor={`nome-${i}`}>Nome do arquivo</Label>
+                  <Input
+                    id={`nome-${i}`}
+                    value={p.nome}
+                    onChange={(e) => updatePendente(i, { nome: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label>Idoso</Label>
+                    <Select value={p.idoso} onValueChange={(v) => updatePendente(i, { idoso: v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {idosos.map((io) => (
+                          <SelectItem key={io.id} value={io.nome}>{io.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Tipo de documento</Label>
+                    <Select
+                      value={p.categoria}
+                      onValueChange={(v) => updatePendente(i, { categoria: v as Documento["categoria"] })}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {CATEGORIAS.map((c) => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            ))}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setPendentes([])}>
+                Cancelar
+              </Button>
+              <Button type="submit">
+                <Upload className="mr-1 h-4 w-4" /> Enviar
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+
       <Dialog
         open={!!pendingDelete}
         onOpenChange={(o) => {
