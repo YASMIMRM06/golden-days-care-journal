@@ -29,9 +29,25 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { documentos as seed, type Documento } from "@/lib/mock-data";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { documentos as seed, idosos, type Documento } from "@/lib/mock-data";
 
 const DELETE_PASSWORD = "sami2026";
+const CATEGORIAS: Documento["categoria"][] = ["RG", "CPF", "Convênio", "Receitas", "Procurações"];
+
+type PendingUpload = {
+  file: File;
+  nome: string;
+  categoria: Documento["categoria"];
+  idoso: string;
+};
+
 
 export const Route = createFileRoute("/documentos")({
   head: () => ({
@@ -56,21 +72,40 @@ function DocumentosPage() {
   const [pendingDelete, setPendingDelete] = useState<Documento | null>(null);
   const [senha, setSenha] = useState("");
   const [erroSenha, setErroSenha] = useState(false);
+  const [pendentes, setPendentes] = useState<PendingUpload[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   function addFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
-    const novos: Documento[] = Array.from(files).map((f) => ({
+    setPendentes(
+      Array.from(files).map((f) => ({
+        file: f,
+        nome: f.name,
+        categoria: "Receitas" as Documento["categoria"],
+        idoso: idosos[0]?.nome ?? "—",
+      })),
+    );
+  }
+
+  function updatePendente(i: number, patch: Partial<PendingUpload>) {
+    setPendentes((p) => p.map((item, idx) => (idx === i ? { ...item, ...patch } : item)));
+  }
+
+  function confirmUpload(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const novos: Documento[] = pendentes.map((p) => ({
       id: crypto.randomUUID(),
-      nome: f.name,
-      categoria: "Receitas",
-      tamanho: formatSize(f.size),
+      nome: p.nome.trim() || p.file.name,
+      categoria: p.categoria,
+      tamanho: formatSize(p.file.size),
       data: new Date().toISOString().slice(0, 10),
-      idoso: "—",
+      idoso: p.idoso,
     }));
     setLista((p) => [...novos, ...p]);
+    setPendentes([]);
     toast.success(`${novos.length} arquivo(s) enviado(s)`);
   }
+
 
   function handlePrint(d: Documento) {
     toast.success(`Imprimindo ${d.nome}`);
@@ -252,6 +287,70 @@ function DocumentosPage() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={pendentes.length > 0} onOpenChange={(o) => { if (!o) setPendentes([]); }}>
+        <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Configurar upload</DialogTitle>
+            <DialogDescription>
+              Escolha o idoso, renomeie o arquivo e defina o tipo de documento.
+            </DialogDescription>
+          </DialogHeader>
+          <form className="grid gap-4" onSubmit={confirmUpload}>
+            {pendentes.map((p, i) => (
+              <div key={i} className="grid gap-3 rounded-lg border p-3">
+                <p className="truncate text-xs text-muted-foreground">
+                  {p.file.name} • {formatSize(p.file.size)}
+                </p>
+                <div className="space-y-1.5">
+                  <Label htmlFor={`nome-${i}`}>Nome do arquivo</Label>
+                  <Input
+                    id={`nome-${i}`}
+                    value={p.nome}
+                    onChange={(e) => updatePendente(i, { nome: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label>Idoso</Label>
+                    <Select value={p.idoso} onValueChange={(v) => updatePendente(i, { idoso: v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {idosos.map((io) => (
+                          <SelectItem key={io.id} value={io.nome}>{io.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Tipo de documento</Label>
+                    <Select
+                      value={p.categoria}
+                      onValueChange={(v) => updatePendente(i, { categoria: v as Documento["categoria"] })}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {CATEGORIAS.map((c) => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            ))}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setPendentes([])}>
+                Cancelar
+              </Button>
+              <Button type="submit">
+                <Upload className="mr-1 h-4 w-4" /> Enviar
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog
         open={!!pendingDelete}
