@@ -29,9 +29,25 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { documentos as seed, type Documento } from "@/lib/mock-data";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { documentos as seed, idosos, type Documento } from "@/lib/mock-data";
 
 const DELETE_PASSWORD = "sami2026";
+const CATEGORIAS: Documento["categoria"][] = ["RG", "CPF", "Convênio", "Receitas", "Procurações"];
+
+type PendingUpload = {
+  file: File;
+  nome: string;
+  categoria: Documento["categoria"];
+  idoso: string;
+};
+
 
 export const Route = createFileRoute("/documentos")({
   head: () => ({
