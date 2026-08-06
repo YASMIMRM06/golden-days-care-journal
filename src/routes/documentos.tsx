@@ -72,21 +72,40 @@ function DocumentosPage() {
   const [pendingDelete, setPendingDelete] = useState<Documento | null>(null);
   const [senha, setSenha] = useState("");
   const [erroSenha, setErroSenha] = useState(false);
+  const [pendentes, setPendentes] = useState<PendingUpload[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   function addFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
-    const novos: Documento[] = Array.from(files).map((f) => ({
+    setPendentes(
+      Array.from(files).map((f) => ({
+        file: f,
+        nome: f.name,
+        categoria: "Receitas" as Documento["categoria"],
+        idoso: idosos[0]?.nome ?? "—",
+      })),
+    );
+  }
+
+  function updatePendente(i: number, patch: Partial<PendingUpload>) {
+    setPendentes((p) => p.map((item, idx) => (idx === i ? { ...item, ...patch } : item)));
+  }
+
+  function confirmUpload(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const novos: Documento[] = pendentes.map((p) => ({
       id: crypto.randomUUID(),
-      nome: f.name,
-      categoria: "Receitas",
-      tamanho: formatSize(f.size),
+      nome: p.nome.trim() || p.file.name,
+      categoria: p.categoria,
+      tamanho: formatSize(p.file.size),
       data: new Date().toISOString().slice(0, 10),
-      idoso: "—",
+      idoso: p.idoso,
     }));
     setLista((p) => [...novos, ...p]);
+    setPendentes([]);
     toast.success(`${novos.length} arquivo(s) enviado(s)`);
   }
+
 
   function handlePrint(d: Documento) {
     toast.success(`Imprimindo ${d.nome}`);
