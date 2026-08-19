@@ -85,9 +85,30 @@ function SobrePage() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="text-2xl font-bold tracking-tight">Sobre o projeto</h2>
+          <p className="mt-3 text-muted-foreground">
+            Projeto acadêmico desenvolvido pela turma de graduação do curso de Tecnólogo em Análise e Desenvolvimento de Sistemas do Instituto Federal do Paraná — Campus Paranaguá.
+          </p>
+        </div>
+        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Card key={i} className="shadow-soft">
+              <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                <div className="grid h-12 w-12 place-items-center rounded-full bg-muted text-lg font-bold text-muted-foreground">
+                  ?
+                </div>
+                <p className="mt-3 text-sm font-medium text-muted-foreground">A definir</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
       <footer className="border-t bg-card/40">
         <div className="mx-auto max-w-6xl px-4 py-6 text-center text-xs text-muted-foreground sm:px-6">
-          © {new Date().getFullYear()} SAMI — Sistema de Acompanhamento e Monitoramento de Idosos.
+          © {new Date().getFullYear()} SAMI — TADS24 IFPR
         </div>
       </footer>
     </div>
