@@ -1,8 +1,140 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { HeartPulse, ShieldCheck, Stethoscope, Users } from "lucide-react";
+import { HeartPulse, Lightbulb, Loader2, Pencil, ShieldCheck, Stethoscope, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth-context";
+
+type Fact = { id: string; position: number; title: string; content: string };
+
+function CuriosidadesSection() {
+  const { isAdmin } = useAuth();
+  const [facts, setFacts] = useState<Fact[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    supabase
+      .from("platform_facts")
+      .select("id,position,title,content")
+      .order("position")
+      .then(({ data }) => {
+        setFacts((data as Fact[] | null) ?? []);
+        setLoading(false);
+      });
+  }, []);
+
+  function update(id: string, patch: Partial<Fact>) {
+    setFacts((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
+  }
+
+  async function save() {
+    setSaving(true);
+    const results = await Promise.all(
+      facts.map((f) =>
+        supabase
+          .from("platform_facts")
+          .update({ title: f.title, content: f.content })
+          .eq("id", f.id),
+      ),
+    );
+    setSaving(false);
+    if (results.some((r) => r.error)) {
+      toast.error("Não foi possível salvar as curiosidades.");
+      return;
+    }
+    setEditing(false);
+    toast.success("Curiosidades atualizadas!");
+  }
+
+  const filled = facts.filter((f) => f.title.trim() || f.content.trim());
+  const visible = editing ? facts : filled;
+
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+      <div className="mx-auto max-w-3xl text-center">
+        <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary">
+          <Lightbulb className="h-6 w-6" />
+        </div>
+        <h2 className="mt-4 text-2xl font-bold tracking-tight">Curiosidades da plataforma</h2>
+        <p className="mt-3 text-muted-foreground">
+          Fatos e detalhes sobre o SAMI. {isAdmin ? "Como administrador, você pode editar os 8 itens." : ""}
+        </p>
+        {isAdmin && (
+          <div className="mt-4 flex justify-center gap-2">
+            {editing ? (
+              <>
+                <Button onClick={save} disabled={saving}>
+                  {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Salvar
+                </Button>
+                <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>
+                  Cancelar
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" onClick={() => setEditing(true)}>
+                <Pencil className="mr-2 h-4 w-4" /> Editar curiosidades
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="mt-8 flex justify-center">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      ) : visible.length === 0 ? (
+        <p className="mt-8 text-center text-sm text-muted-foreground">
+          Nenhuma curiosidade cadastrada ainda.
+        </p>
+      ) : (
+        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {visible.map((f) => (
+            <Card key={f.id} className="shadow-soft">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-3">
+                  <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
+                    {f.position}
+                  </div>
+                  {editing ? (
+                    <div className="w-full space-y-2">
+                      <Input
+                        value={f.title}
+                        placeholder={`Título da curiosidade ${f.position}`}
+                        onChange={(e) => update(f.id, { title: e.target.value })}
+                      />
+                      <Textarea
+                        value={f.content}
+                        placeholder="Descreva a curiosidade..."
+                        rows={3}
+                        onChange={(e) => update(f.id, { content: e.target.value })}
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <h3 className="font-semibold">{f.title || `Curiosidade ${f.position}`}</h3>
+                      {f.content && (
+                        <p className="mt-1 text-sm text-muted-foreground">{f.content}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
 
 export const Route = createFileRoute("/sobre")({
   head: () => ({
