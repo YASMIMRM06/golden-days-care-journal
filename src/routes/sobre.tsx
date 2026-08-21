@@ -217,33 +217,34 @@ function SobrePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-2xl font-bold tracking-tight">Sobre o projeto</h2>
-          <p className="mt-3 text-muted-foreground">
-            Projeto acadêmico desenvolvido pela turma de graduação do curso de Tecnólogo em Análise e Desenvolvimento de Sistemas do Instituto Federal do Paraná — Campus Paranaguá.
+      <section className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+        <div className="rounded-2xl border bg-card/40 px-6 py-6 text-center">
+          <h2 className="text-base font-semibold tracking-tight text-muted-foreground">Sobre o projeto</h2>
+          <p className="mx-auto mt-2 max-w-2xl text-sm text-muted-foreground/80">
+            Projeto acadêmico do curso de Tecnólogo em Análise e Desenvolvimento de Sistemas do IFPR — Campus Paranaguá.
           </p>
-        </div>
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {[
-            "Ana Caroline Feltz",
-            "Yasmim Russi",
-            "Gabrielly Lopes",
-            "João Victor Santos",
-            "Luiz Fernando Quinholi",
-            "Nicholas Kotzias",
-            "Arthur Nakayama",
-            "A definir",
-          ].map((nome, i) => (
-            <Card key={i} className="shadow-soft">
-              <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-                <div className="grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-lg font-bold text-primary">
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+            {[
+              "Ana Caroline Feltz",
+              "Yasmim Russi",
+              "Gabrielly Lopes",
+              "João Victor Santos",
+              "Luiz Fernando Quinholi",
+              "Nicholas Kotzias",
+              "Arthur Nakayama",
+              "A definir",
+            ].map((nome, i) => (
+              <div
+                key={i}
+                className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground"
+              >
+                <span className="grid h-5 w-5 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
                   {nome === "A definir" ? "?" : nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                </div>
-                <p className="mt-3 text-sm font-medium">{nome}</p>
-              </CardContent>
-            </Card>
-          ))}
+                </span>
+                {nome}
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
