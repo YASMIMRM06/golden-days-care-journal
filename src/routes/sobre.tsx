@@ -247,6 +247,8 @@ function SobrePage() {
         </div>
       </section>
 
+      <CuriosidadesSection />
+
       <footer className="border-t bg-card/40">
         <div className="mx-auto max-w-6xl px-4 py-6 text-center text-xs text-muted-foreground sm:px-6">
           © {new Date().getFullYear()} SAMI — TADS24 IFPR
