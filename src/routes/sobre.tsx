@@ -93,13 +93,22 @@ function SobrePage() {
           </p>
         </div>
         <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
+          {[
+            "Ana Caroline Feltz",
+            "Yasmim Russi",
+            "Gabrielly Lopes",
+            "João Victor Santos",
+            "Luiz Fernando Quinholi",
+            "Nicholas Kotzias",
+            "Arthur Nakayama",
+            "A definir",
+          ].map((nome, i) => (
             <Card key={i} className="shadow-soft">
               <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-                <div className="grid h-12 w-12 place-items-center rounded-full bg-muted text-lg font-bold text-muted-foreground">
-                  ?
+                <div className="grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-lg font-bold text-primary">
+                  {nome === "A definir" ? "?" : nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                 </div>
-                <p className="mt-3 text-sm font-medium text-muted-foreground">A definir</p>
+                <p className="mt-3 text-sm font-medium">{nome}</p>
               </CardContent>
             </Card>
           ))}
