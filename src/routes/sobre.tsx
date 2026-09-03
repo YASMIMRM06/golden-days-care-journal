@@ -232,14 +232,14 @@ function SobrePage() {
               "Luiz Fernando Quinholi",
               "Nicholas Kotzias",
               "Arthur Nakayama",
-              "A definir",
+              "Josue Silva Henrique",
             ].map((nome, i) => (
               <div
                 key={i}
                 className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground"
               >
                 <span className="grid h-5 w-5 place-items-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
-                  {nome === "A definir" ? "?" : nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                  {nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                 </span>
                 {nome}
               </div>
