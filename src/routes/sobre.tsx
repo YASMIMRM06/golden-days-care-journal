@@ -232,7 +232,7 @@ function SobrePage() {
               "Luiz Fernando Quinholi",
               "Nicholas Kotzias",
               "Arthur Nakayama",
-              "A definir",
+              "Josue Silva Henrique",
             ].map((nome, i) => (
               <div
                 key={i}
