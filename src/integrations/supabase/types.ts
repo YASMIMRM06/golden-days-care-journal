@@ -49,6 +49,7 @@ export type Database = {
           full_name: string
           id: string
           phone: string | null
+          preferences: Json
           role: Database["public"]["Enums"]["app_role"]
           status: Database["public"]["Enums"]["approval_status"]
           updated_at: string
@@ -60,6 +61,7 @@ export type Database = {
           full_name?: string
           id: string
           phone?: string | null
+          preferences?: Json
           role?: Database["public"]["Enums"]["app_role"]
           status?: Database["public"]["Enums"]["approval_status"]
           updated_at?: string
@@ -71,6 +73,7 @@ export type Database = {
           full_name?: string
           id?: string
           phone?: string | null
+          preferences?: Json
           role?: Database["public"]["Enums"]["app_role"]
           status?: Database["public"]["Enums"]["approval_status"]
           updated_at?: string
