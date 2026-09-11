@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
@@ -8,113 +9,206 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth-context";
+import {
+  usePreferences,
+  type AccentColor,
+  type Density,
+  type FontSize,
+  type ThemeMode,
+} from "@/lib/preferences-context";
 
 export const Route = createFileRoute("/configuracoes")({
   head: () => ({
     meta: [
-      { title: "Configurações — CareSenior" },
-      { name: "description", content: "Perfil, permissões, notificações e segurança." },
+      { title: "Configurações — SAMI" },
+      { name: "description", content: "Aparência, notificações e segurança da sua conta no SAMI." },
+      { property: "og:title", content: "Configurações — SAMI" },
+      { property: "og:description", content: "Personalize a interface e as notificações do SAMI." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ConfigPage,
 });
 
+const acentos: { value: AccentColor; label: string; classe: string }[] = [
+  { value: "blue", label: "Azul", classe: "bg-[oklch(0.546_0.221_263)]" },
+  { value: "teal", label: "Turquesa", classe: "bg-[oklch(0.66_0.13_186)]" },
+  { value: "green", label: "Verde", classe: "bg-[oklch(0.65_0.17_149)]" },
+  { value: "rose", label: "Vermelho", classe: "bg-[oklch(0.62_0.21_15)]" },
+  { value: "violet", label: "Violeta", classe: "bg-[oklch(0.58_0.22_295)]" },
+];
+
 function ConfigPage() {
+  const { profile } = useAuth();
+  const { preferences, update, reset } = usePreferences();
+  const [salvandoSenha, setSalvandoSenha] = useState(false);
+
+  async function alterarSenha(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    const nova = String(f.get("nova") || "");
+    const confirmar = String(f.get("confirmar") || "");
+    if (nova.length < 6) {
+      toast.error("A nova senha precisa ter ao menos 6 caracteres");
+      return;
+    }
+    if (nova !== confirmar) {
+      toast.error("As senhas não conferem");
+      return;
+    }
+    setSalvandoSenha(true);
+    const { error } = await supabase.auth.updateUser({ password: nova });
+    setSalvandoSenha(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    (e.target as HTMLFormElement).reset();
+    toast.success("Senha alterada");
+  }
+
   return (
     <div className="space-y-6">
-      <PageHeader title="Configurações" description="Gerencie sua conta e preferências." />
+      <PageHeader title="Configurações" description="Personalize a interface e as notificações." />
 
-      <Tabs defaultValue="perfil">
+      <Tabs defaultValue="aparencia">
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
-          <TabsTrigger value="perfil">Perfil</TabsTrigger>
-          <TabsTrigger value="permissoes">Permissões</TabsTrigger>
+          <TabsTrigger value="aparencia">Aparência</TabsTrigger>
           <TabsTrigger value="notificacoes">Notificações</TabsTrigger>
           <TabsTrigger value="seguranca">Segurança</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="perfil" className="mt-4">
+        <TabsContent value="aparencia" className="mt-4">
           <Card className="shadow-soft">
-            <CardHeader><CardTitle>Perfil do usuário</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src="https://i.pravatar.cc/120?img=5" />
-                  <AvatarFallback>JC</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold">Júlia Costa</p>
-                  <p className="text-sm text-muted-foreground">Administradora</p>
-                </div>
-                <Button variant="outline" className="ml-auto">Alterar foto</Button>
-              </div>
-              <Separator />
-              <form
-                className="grid grid-cols-1 gap-4 sm:grid-cols-2"
-                onSubmit={(e) => { e.preventDefault(); toast.success("Perfil atualizado"); }}
-              >
+            <CardHeader>
+              <CardTitle>Personalização</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label>Nome</Label>
-                  <Input defaultValue="Júlia Costa" />
+                  <Label>Tema</Label>
+                  <Select
+                    value={preferences.theme}
+                    onValueChange={(v) => update({ theme: v as ThemeMode }).then(() => toast.success("Tema atualizado"))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="light">Claro</SelectItem>
+                      <SelectItem value="dark">Escuro</SelectItem>
+                      <SelectItem value="system">Seguir o dispositivo</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="space-y-1.5">
-                  <Label>E-mail</Label>
-                  <Input type="email" defaultValue="julia@caresenior.app" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Telefone</Label>
-                  <Input defaultValue="(11) 98888-7777" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Cargo</Label>
-                  <Input defaultValue="Enfermeira responsável" />
-                </div>
-                <div className="sm:col-span-2 flex justify-end">
-                  <Button type="submit">Salvar</Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        <TabsContent value="permissoes" className="mt-4">
-          <Card className="shadow-soft">
-            <CardHeader><CardTitle>Permissões e equipe</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              {[
-                { nome: "Júlia Costa", role: "Administrador" },
-                { nome: "Carlos Mendes", role: "Enfermeiro" },
-                { nome: "Ana Lima", role: "Cuidadora" },
-                { nome: "Bruno Tavares", role: "Fisioterapeuta" },
-              ].map((u) => (
-                <div key={u.nome} className="flex items-center gap-3 rounded-lg border p-3">
-                  <Avatar className="h-9 w-9"><AvatarFallback>{u.nome.slice(0, 2)}</AvatarFallback></Avatar>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{u.nome}</p>
-                    <p className="text-xs text-muted-foreground">{u.role}</p>
-                  </div>
-                  <Badge variant="outline">Ativo</Badge>
+                <div className="space-y-1.5">
+                  <Label>Tamanho da fonte</Label>
+                  <Select
+                    value={preferences.fontSize}
+                    onValueChange={(v) => update({ fontSize: v as FontSize })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sm">Pequena</SelectItem>
+                      <SelectItem value="base">Média</SelectItem>
+                      <SelectItem value="lg">Grande</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              ))}
+
+                <div className="space-y-1.5">
+                  <Label>Densidade</Label>
+                  <Select
+                    value={preferences.density}
+                    onValueChange={(v) => update({ density: v as Density })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="comfortable">Confortável</SelectItem>
+                      <SelectItem value="compact">Compacta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Cor de destaque</Label>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {acentos.map((a) => (
+                      <button
+                        key={a.value}
+                        type="button"
+                        aria-label={a.label}
+                        title={a.label}
+                        onClick={() => update({ accent: a.value })}
+                        className={
+                          "h-8 w-8 rounded-full ring-offset-2 ring-offset-background " +
+                          a.classe +
+                          (preferences.accent === a.value ? " ring-2 ring-foreground" : "")
+                        }
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <Label>Reduzir animações</Label>
+                  <p className="text-xs text-muted-foreground">Melhora o conforto visual e o desempenho.</p>
+                </div>
+                <Switch
+                  checked={preferences.reducedMotion}
+                  onCheckedChange={(v) => update({ reducedMotion: v })}
+                />
+              </div>
+
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={() => reset().then(() => toast.success("Padrões restaurados"))}>
+                  Restaurar padrões
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="notificacoes" className="mt-4">
           <Card className="shadow-soft">
-            <CardHeader><CardTitle>Notificações</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle>Notificações</CardTitle>
+            </CardHeader>
             <CardContent className="space-y-4">
-              {[
-                "Lembretes de medicamentos",
-                "Alertas de ocorrências críticas",
-                "Lembretes de consultas",
-                "Resumo diário por e-mail",
-              ].map((label) => (
-                <div key={label} className="flex items-center justify-between gap-3">
+              {(
+                [
+                  ["medicationReminders", "Lembretes de medicamentos"],
+                  ["criticalAlerts", "Alertas de ocorrências críticas"],
+                  ["appointmentReminders", "Lembretes de consultas"],
+                  ["emailDailySummary", "Resumo diário"],
+                ] as const
+              ).map(([key, label]) => (
+                <div key={key} className="flex items-center justify-between gap-3">
                   <Label className="flex-1">{label}</Label>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={preferences[key]}
+                    onCheckedChange={(v) => update({ [key]: v })}
+                  />
                 </div>
               ))}
             </CardContent>
@@ -123,25 +217,25 @@ function ConfigPage() {
 
         <TabsContent value="seguranca" className="mt-4">
           <Card className="shadow-soft">
-            <CardHeader><CardTitle>Segurança</CardTitle></CardHeader>
-            <CardContent>
-              <form
-                className="grid grid-cols-1 gap-4 sm:max-w-md"
-                onSubmit={(e) => { e.preventDefault(); toast.success("Senha alterada"); }}
-              >
+            <CardHeader>
+              <CardTitle>Segurança</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Conta: <span className="font-medium text-foreground">{profile?.email ?? "—"}</span>
+              </p>
+              <form className="grid grid-cols-1 gap-4 sm:max-w-md" onSubmit={alterarSenha}>
                 <div className="space-y-1.5">
-                  <Label>Senha atual</Label>
-                  <Input type="password" />
+                  <Label htmlFor="nova">Nova senha</Label>
+                  <Input id="nova" name="nova" type="password" required minLength={6} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Nova senha</Label>
-                  <Input type="password" />
+                  <Label htmlFor="confirmar">Confirmar nova senha</Label>
+                  <Input id="confirmar" name="confirmar" type="password" required minLength={6} />
                 </div>
-                <div className="space-y-1.5">
-                  <Label>Confirmar nova senha</Label>
-                  <Input type="password" />
-                </div>
-                <Button type="submit" className="w-fit">Alterar senha</Button>
+                <Button type="submit" className="w-fit" disabled={salvandoSenha}>
+                  {salvandoSenha ? "Salvando..." : "Alterar senha"}
+                </Button>
               </form>
             </CardContent>
           </Card>
