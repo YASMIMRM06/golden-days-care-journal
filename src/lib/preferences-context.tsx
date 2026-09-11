@@ -126,12 +126,13 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     if (user) {
       const { error } = await supabase
         .from("profiles")
-        .update({ preferences: next })
+        .update({ preferences: next } as unknown as Record<string, unknown>)
         .eq("id", user.id);
       if (error) {
         console.error("[preferences] failed to save", error);
       }
     }
+
   }
 
   return (
