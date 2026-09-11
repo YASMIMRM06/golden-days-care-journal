@@ -145,6 +145,59 @@
   --sidebar-ring: oklch(0.62 0.2 263);
 }
 
+/* Cor de destaque escolhida nas configurações */
+:root[data-accent="teal"] {
+  --primary: oklch(0.66 0.13 186);
+  --ring: oklch(0.66 0.13 186);
+  --sidebar-primary: oklch(0.66 0.13 186);
+  --sidebar-accent-foreground: oklch(0.66 0.13 186);
+  --info: oklch(0.66 0.13 186);
+}
+:root[data-accent="green"] {
+  --primary: oklch(0.65 0.17 149);
+  --ring: oklch(0.65 0.17 149);
+  --sidebar-primary: oklch(0.65 0.17 149);
+  --sidebar-accent-foreground: oklch(0.65 0.17 149);
+  --info: oklch(0.65 0.17 149);
+}
+:root[data-accent="rose"] {
+  --primary: oklch(0.62 0.21 15);
+  --ring: oklch(0.62 0.21 15);
+  --sidebar-primary: oklch(0.62 0.21 15);
+  --sidebar-accent-foreground: oklch(0.62 0.21 15);
+  --info: oklch(0.62 0.21 15);
+}
+:root[data-accent="violet"] {
+  --primary: oklch(0.58 0.22 295);
+  --ring: oklch(0.58 0.22 295);
+  --sidebar-primary: oklch(0.58 0.22 295);
+  --sidebar-accent-foreground: oklch(0.58 0.22 295);
+  --info: oklch(0.58 0.22 295);
+}
+
+/* Densidade da interface */
+:root[data-density="compact"] {
+  --spacing: 0.2rem;
+  --radius: 0.5rem;
+}
+
+/* Tamanho da fonte */
+:root[data-font-size="sm"] {
+  font-size: 93.75%;
+}
+:root[data-font-size="lg"] {
+  font-size: 112.5%;
+}
+
+/* Reduzir animações */
+.motion-reduce *,
+.motion-reduce *::before,
+.motion-reduce *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
