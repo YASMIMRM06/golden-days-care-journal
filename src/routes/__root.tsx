@@ -256,12 +256,15 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <NotificationsProvider>
-          <AuthGate>
-            <ShellSwitcher />
-          </AuthGate>
-          <Toaster richColors position="top-right" />
+          <PreferencesProvider>
+            <AuthGate>
+              <ShellSwitcher />
+            </AuthGate>
+            <Toaster richColors position="top-right" />
+          </PreferencesProvider>
         </NotificationsProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
 }
+
