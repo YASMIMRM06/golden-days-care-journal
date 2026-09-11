@@ -69,13 +69,15 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
         .eq("id", user.id)
         .maybeSingle();
       if (!cancelled) {
-        if (data?.preferences) {
-          const merged = { ...defaultPreferences, ...(data.preferences as Partial<Preferences>) };
+        if (data && (data as unknown as { preferences?: unknown }).preferences) {
+          const stored = (data as unknown as { preferences?: Partial<Preferences> }).preferences;
+          const merged = { ...defaultPreferences, ...stored };
           setPreferences(merged);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         }
         setLoading(false);
       }
+
     }
     load();
     return () => { cancelled = true; };
