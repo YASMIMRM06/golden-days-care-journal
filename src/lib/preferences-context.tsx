@@ -20,7 +20,7 @@ export type Preferences = {
 };
 
 export const defaultPreferences: Preferences = {
-  theme: "system",
+  theme: "light",
   accent: "blue",
   fontSize: "base",
   density: "comfortable",
@@ -34,16 +34,25 @@ export const defaultPreferences: Preferences = {
 const STORAGE_KEY = "sami:preferences";
 
 function getInitialPreferences(): Preferences {
+  if (typeof window === "undefined") return { ...defaultPreferences };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return { ...defaultPreferences, ...JSON.parse(raw) };
-  } catch {}
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<Preferences>;
+      // Migração: "system" deixou de ser padrão para evitar tema escuro inesperado.
+      if (parsed.theme === "system") parsed.theme = "light";
+      return { ...defaultPreferences, ...parsed };
+    }
+  } catch {
+    /* ignora storage inválido */
+  }
   return { ...defaultPreferences };
 }
 
 type Ctx = {
   preferences: Preferences;
   update: (patch: Partial<Preferences>) => Promise<void>;
+  reset: () => Promise<void>;
   loading: boolean;
 };
 
@@ -54,7 +63,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   const [preferences, setPreferences] = useState<Preferences>(getInitialPreferences);
   const [loading, setLoading] = useState(true);
 
-  // Load from backend when user is known
+  // Carrega do banco quando o usuário é conhecido (prioridade sobre o local)
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -63,83 +72,77 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
         return;
       }
       setLoading(true);
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("profiles")
         .select("preferences")
         .eq("id", user.id)
         .maybeSingle();
-      if (!cancelled) {
-        if (data && (data as unknown as { preferences?: unknown }).preferences) {
-          const stored = (data as unknown as { preferences?: Partial<Preferences> }).preferences;
-          const merged = { ...defaultPreferences, ...stored };
-          setPreferences(merged);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-        }
-        setLoading(false);
+      if (cancelled) return;
+      const stored = (data as unknown as { preferences?: Partial<Preferences> } | null)?.preferences;
+      if (stored && Object.keys(stored).length > 0) {
+        const merged = { ...defaultPreferences, ...stored };
+        if (merged.theme === "system") merged.theme = "light";
+        setPreferences(merged);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+      } else {
+        // Primeira vez: grava o que já existe localmente na conta
+        const local = getInitialPreferences();
+        setPreferences(local);
+        await supabase
+          .from("profiles")
+          .update({ preferences: local } as never)
+          .eq("id", user.id);
       }
-
+      setLoading(false);
     }
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
-  // Apply theme/accent/font/density classes to document
+  // Aplica as preferências na interface
   useEffect(() => {
     const root = document.documentElement;
 
-    // Theme
     root.classList.remove("light", "dark");
     if (preferences.theme === "dark") {
       root.classList.add("dark");
-    } else if (preferences.theme === "light") {
-      root.classList.add("light");
-    } else {
+    } else if (preferences.theme === "system") {
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       root.classList.add(prefersDark ? "dark" : "light");
-    }
-
-    // Accent
-    root.setAttribute("data-accent", preferences.accent);
-
-    // Font size
-    root.classList.remove("text-sm", "text-base", "text-lg");
-    if (preferences.fontSize === "sm") root.classList.add("text-sm");
-    else if (preferences.fontSize === "lg") root.classList.add("text-lg");
-    else root.classList.add("text-base");
-
-    // Density
-    root.setAttribute("data-density", preferences.density);
-
-    // Reduced motion
-    if (preferences.reducedMotion) {
-      root.classList.add("motion-reduce");
     } else {
-      root.classList.remove("motion-reduce");
+      root.classList.add("light");
     }
+
+    root.setAttribute("data-accent", preferences.accent);
+    root.setAttribute("data-density", preferences.density);
+    root.setAttribute("data-font-size", preferences.fontSize);
+    root.classList.toggle("motion-reduce", preferences.reducedMotion);
   }, [preferences]);
 
-  async function update(patch: Partial<Preferences>) {
-    const next = { ...preferences, ...patch };
+  async function persist(next: Preferences) {
     setPreferences(next);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-
     if (user) {
       const { error } = await supabase
         .from("profiles")
-        .update({ preferences: next } as any)
+        .update({ preferences: next } as never)
         .eq("id", user.id);
-      if (error) {
-        console.error("[preferences] failed to save", error);
-      }
+      if (error) console.error("[preferences] falha ao salvar", error);
     }
+  }
 
+  async function update(patch: Partial<Preferences>) {
+    await persist({ ...preferences, ...patch });
+  }
 
+  async function reset() {
+    await persist({ ...defaultPreferences });
   }
 
   return (
-    <Ctx.Provider value={{ preferences, update, loading }}>
-      {children}
-    </Ctx.Provider>
+    <Ctx.Provider value={{ preferences, update, reset, loading }}>{children}</Ctx.Provider>
   );
 }
 
