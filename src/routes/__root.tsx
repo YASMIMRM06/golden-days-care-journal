@@ -19,6 +19,8 @@ import { AppNavbar } from "@/components/app-navbar";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { NotificationsProvider } from "@/lib/notifications-context";
+import { PreferencesProvider } from "@/lib/preferences-context";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Clock, HeartPulse, ShieldX } from "lucide-react";
@@ -254,12 +256,15 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <NotificationsProvider>
-          <AuthGate>
-            <ShellSwitcher />
-          </AuthGate>
-          <Toaster richColors position="top-right" />
+          <PreferencesProvider>
+            <AuthGate>
+              <ShellSwitcher />
+            </AuthGate>
+            <Toaster richColors position="top-right" />
+          </PreferencesProvider>
         </NotificationsProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
 }
+
