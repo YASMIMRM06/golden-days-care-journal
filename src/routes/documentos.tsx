@@ -7,7 +7,6 @@ import {
   Grid3x3,
   List,
   Lock,
-  Mail,
   Printer,
   Trash2,
   Upload,
@@ -110,10 +109,6 @@ function DocumentosPage() {
   function handlePrint(d: Documento) {
     toast.success(`Imprimindo ${d.nome}`);
     window.print();
-  }
-
-  function handleSend(d: Documento) {
-    toast.success(`${d.nome} enviado por e-mail`);
   }
 
   function handleView(d: Documento) {
@@ -221,12 +216,9 @@ function DocumentosPage() {
                     <span className="text-xs text-muted-foreground">{d.tamanho}</span>
                   </div>
                 </div>
-                <div className="mt-3 grid grid-cols-4 gap-1">
+                <div className="mt-3 grid grid-cols-3 gap-1">
                   <Button variant="ghost" size="icon" aria-label="Visualizar" onClick={() => handleView(d)}>
                     <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" aria-label="Enviar" onClick={() => handleSend(d)}>
-                    <Mail className="h-4 w-4" />
                   </Button>
                   <Button variant="ghost" size="icon" aria-label="Imprimir" onClick={() => handlePrint(d)}>
                     <Printer className="h-4 w-4" />
@@ -262,9 +254,6 @@ function DocumentosPage() {
                   <span className="hidden text-xs text-muted-foreground sm:inline">{d.tamanho}</span>
                   <Button variant="ghost" size="icon" aria-label="Visualizar" onClick={() => handleView(d)}>
                     <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" aria-label="Enviar" onClick={() => handleSend(d)}>
-                    <Mail className="h-4 w-4" />
                   </Button>
                   <Button variant="ghost" size="icon" aria-label="Imprimir" onClick={() => handlePrint(d)}>
                     <Printer className="h-4 w-4" />
