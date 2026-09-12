@@ -321,14 +321,6 @@ function RelatoriosPage() {
                 <Button variant="ghost" size="icon" aria-label="Imprimir" onClick={() => { toast.success("PDF gerado"); window.print(); }}>
                   <Printer className="h-4 w-4" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Enviar por e-mail"
-                  onClick={() => toast.success(t.destinatarios ? `Enviado para ${t.destinatarios}` : "Enviado por e-mail")}
-                >
-                  <Mail className="h-4 w-4" />
-                </Button>
                 <Button variant="ghost" size="icon" aria-label="Remover" onClick={() => removeCustom(t.id)}>
                   <X className="h-4 w-4" />
                 </Button>
