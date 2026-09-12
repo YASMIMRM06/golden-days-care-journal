@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { Eye, FileBarChart2, Mail, Paperclip, Plus, Printer, Upload, X } from "lucide-react";
+import { Eye, FileBarChart2, Paperclip, Plus, Printer, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
@@ -47,10 +47,8 @@ type RelatorioCustom = {
   periodo: string;
   formato: string;
   idoso: string;
-  incluirGraficos: boolean;
   incluirFotos: boolean;
   incluirAssinatura: boolean;
-  destinatarios: string;
   observacoes: string;
   anexoNome?: string;
 };
