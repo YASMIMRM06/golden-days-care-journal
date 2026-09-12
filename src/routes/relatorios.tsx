@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { Eye, FileBarChart2, Mail, Paperclip, Plus, Printer, Upload, X } from "lucide-react";
+import { Eye, FileBarChart2, Paperclip, Plus, Printer, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
@@ -47,10 +47,8 @@ type RelatorioCustom = {
   periodo: string;
   formato: string;
   idoso: string;
-  incluirGraficos: boolean;
   incluirFotos: boolean;
   incluirAssinatura: boolean;
-  destinatarios: string;
   observacoes: string;
   anexoNome?: string;
 };
@@ -93,10 +91,8 @@ function RelatoriosPage() {
       periodo: String(f.get("periodo") || "mensal"),
       formato: String(f.get("formato") || "pdf"),
       idoso: String(f.get("idoso") || "todos"),
-      incluirGraficos: f.get("graficos") === "on",
       incluirFotos: f.get("fotos") === "on",
       incluirAssinatura: f.get("assinatura") === "on",
-      destinatarios: String(f.get("destinatarios") || ""),
       observacoes: String(f.get("observacoes") || ""),
       anexoNome: anexo?.name,
     };
@@ -201,22 +197,12 @@ function RelatoriosPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="destinatarios">Destinatários (e-mails separados por vírgula)</Label>
-                  <Input
-                    id="destinatarios"
-                    name="destinatarios"
-                    placeholder="familia@exemplo.com, medico@exemplo.com"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
                   <Label htmlFor="observacoes">Observações</Label>
                   <Textarea id="observacoes" name="observacoes" placeholder="Notas internas, contexto clínico..." />
                 </div>
 
                 <div className="grid grid-cols-1 gap-2 rounded-lg border p-3 sm:grid-cols-3">
                   <label className="flex items-center gap-2 text-sm">
-                    <Checkbox name="graficos" defaultChecked /> Incluir gráficos
                   </label>
                   <label className="flex items-center gap-2 text-sm">
                     <Checkbox name="fotos" /> Incluir fotos
@@ -333,14 +319,6 @@ function RelatoriosPage() {
                 <Button variant="ghost" size="icon" aria-label="Imprimir" onClick={() => { toast.success("PDF gerado"); window.print(); }}>
                   <Printer className="h-4 w-4" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Enviar por e-mail"
-                  onClick={() => toast.success(t.destinatarios ? `Enviado para ${t.destinatarios}` : "Enviado por e-mail")}
-                >
-                  <Mail className="h-4 w-4" />
-                </Button>
                 <Button variant="ghost" size="icon" aria-label="Remover" onClick={() => removeCustom(t.id)}>
                   <X className="h-4 w-4" />
                 </Button>
@@ -364,9 +342,6 @@ function RelatoriosPage() {
                 </Button>
                 <Button variant="ghost" size="icon" aria-label="Imprimir" onClick={() => { toast.success("PDF gerado"); window.print(); }}>
                   <Printer className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" aria-label="Enviar por e-mail" onClick={() => toast.success("Enviado por e-mail")}>
-                  <Mail className="h-4 w-4" />
                 </Button>
               </div>
             </CardContent>

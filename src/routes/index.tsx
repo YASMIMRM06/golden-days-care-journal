@@ -71,7 +71,7 @@ function Dashboard() {
           <CardHeader>
             <CardTitle>Ocorrências por mês</CardTitle>
           </CardHeader>
-          <CardContent className="h-72">
+          <CardContent className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={ocorrenciasPorMes}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
@@ -94,7 +94,7 @@ function Dashboard() {
           <CardHeader>
             <CardTitle>Histórico de quedas</CardTitle>
           </CardHeader>
-          <CardContent className="h-72">
+          <CardContent className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={quedasPorMes}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
@@ -124,7 +124,7 @@ function Dashboard() {
         <CardHeader>
           <CardTitle>Medicamentos administrados (semana)</CardTitle>
         </CardHeader>
-        <CardContent className="h-64">
+        <CardContent className="h-44">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={medicamentosAdministrados}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />

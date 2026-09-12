@@ -16,7 +16,7 @@ export type Idoso = {
 export type Ocorrencia = {
   id: string;
   data: string;
-  tipo: "Queda" | "Emergência" | "Alteração de Saúde" | "Comportamental" | "Outro";
+  tipo: string;
   idoso: string;
   responsavel: string;
   descricao: string;
@@ -48,7 +48,8 @@ export type RotinaItem = {
   id: string;
   horario: string;
   atividade: string;
-  categoria: "Alimentação" | "Higiene" | "Exercícios" | "Terapias" | "Lazer";
+  categoria: string;
+  data: string;
   responsavel: string;
   status: "Pendente" | "Concluída";
 };
@@ -56,7 +57,7 @@ export type RotinaItem = {
 export type Documento = {
   id: string;
   nome: string;
-  categoria: "RG" | "CPF" | "Convênio" | "Receitas" | "Procurações";
+  categoria: string;
   tamanho: string;
   data: string;
   idoso: string;
@@ -155,14 +156,16 @@ export const consultas: Consulta[] = [
   { id: "c4", data: "2026-06-10", hora: "11:00", medico: "Dra. Carla Mendes", especialidade: "Endocrinologia", local: "Clínica Vida", idoso: "José Carlos Oliveira", status: "Realizada" },
 ];
 
+const HOJE = new Date().toISOString().slice(0, 10);
+
 export const rotina: RotinaItem[] = [
-  { id: "r1", horario: "07:00", atividade: "Café da manhã", categoria: "Alimentação", responsavel: "Cuidadora Ana", status: "Concluída" },
-  { id: "r2", horario: "08:00", atividade: "Banho e higiene", categoria: "Higiene", responsavel: "Cuidadora Ana", status: "Concluída" },
-  { id: "r3", horario: "10:00", atividade: "Caminhada no jardim", categoria: "Exercícios", responsavel: "Fisio. Bruno", status: "Pendente" },
-  { id: "r4", horario: "12:00", atividade: "Almoço", categoria: "Alimentação", responsavel: "Cuidadora Ana", status: "Pendente" },
-  { id: "r5", horario: "15:00", atividade: "Sessão de fisioterapia", categoria: "Terapias", responsavel: "Fisio. Bruno", status: "Pendente" },
-  { id: "r6", horario: "16:30", atividade: "Atividade de leitura", categoria: "Lazer", responsavel: "Voluntária Júlia", status: "Pendente" },
-  { id: "r7", horario: "19:00", atividade: "Jantar", categoria: "Alimentação", responsavel: "Cuidadora Sara", status: "Pendente" },
+  { id: "r1", data: HOJE, horario: "07:00", atividade: "Café da manhã", categoria: "Alimentação", responsavel: "Cuidadora Ana", status: "Concluída" },
+  { id: "r2", data: HOJE, horario: "08:00", atividade: "Banho e higiene", categoria: "Higiene", responsavel: "Cuidadora Ana", status: "Concluída" },
+  { id: "r3", data: HOJE, horario: "10:00", atividade: "Caminhada no jardim", categoria: "Exercícios", responsavel: "Fisio. Bruno", status: "Pendente" },
+  { id: "r4", data: HOJE, horario: "12:00", atividade: "Almoço", categoria: "Alimentação", responsavel: "Cuidadora Ana", status: "Pendente" },
+  { id: "r5", data: HOJE, horario: "15:00", atividade: "Sessão de fisioterapia", categoria: "Terapias", responsavel: "Fisio. Bruno", status: "Pendente" },
+  { id: "r6", data: HOJE, horario: "16:30", atividade: "Atividade de leitura", categoria: "Lazer", responsavel: "Voluntária Júlia", status: "Pendente" },
+  { id: "r7", data: HOJE, horario: "19:00", atividade: "Jantar", categoria: "Alimentação", responsavel: "Cuidadora Sara", status: "Pendente" },
 ];
 
 export const documentos: Documento[] = [
