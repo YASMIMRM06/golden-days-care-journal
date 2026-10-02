@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { roleLabels, useAuth, type AppRole } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/auth")({
@@ -128,6 +129,23 @@ function AuthPage() {
                   </div>
                   <Button type="submit" className="w-full" disabled={busy}>
                     <LogIn className="mr-1 h-4 w-4" /> Entrar
+                  </Button>
+                  <div className="relative py-1 text-center text-xs text-muted-foreground">
+                    <span className="bg-card px-2">ou</span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    disabled={busy}
+                    onClick={async () => {
+                      const result = await lovable.auth.signInWithOAuth("google", {
+                        redirect_uri: window.location.origin,
+                      });
+                      if (result.error) toast.error("Não foi possível entrar com Google");
+                    }}
+                  >
+                    Entrar com Google
                   </Button>
                 </form>
               </TabsContent>
