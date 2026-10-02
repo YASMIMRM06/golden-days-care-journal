@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Cake, CalendarCheck, Heart, PartyPopper, Plus } from "lucide-react";
+import { Cake, CalendarCheck, CalendarPlus, Heart, Pencil, PartyPopper, Plus, Tag } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
@@ -15,137 +15,146 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { DateFieldBR } from "@/components/date-field";
+import { OtherSelect, resolveOtherValue, splitOtherValue } from "@/components/other-select";
+import { toBRDate, todayISO } from "@/lib/date-utils";
+import { googleCalendarUrl } from "@/lib/google-calendar";
 
 export const Route = createFileRoute("/calendario")({
   head: () => ({
     meta: [
-      { title: "Calendário — CareSenior" },
+      { title: "Calendário — SAMI" },
       { name: "description", content: "Calendário mensal com eventos, consultas e datas comemorativas." },
+      { property: "og:title", content: "Calendário — SAMI" },
+      { property: "og:description", content: "Agenda de eventos do SAMI com envio ao Google Calendar." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: CalendarioPage,
 });
 
-type EventoTipo = "consulta" | "aniversario" | "comemorativa" | "atividade";
-
-type Evento = {
-  id: string;
-  dia: number;
-  titulo: string;
-  tipo: EventoTipo;
-};
-
-const estilos: Record<EventoTipo, { cor: string; icon: typeof CalendarCheck }> = {
-  consulta: { cor: "bg-primary/10 text-primary", icon: CalendarCheck },
-  aniversario: { cor: "bg-warning/15 text-warning", icon: Cake },
-  comemorativa: { cor: "bg-secondary/15 text-secondary", icon: PartyPopper },
-  atividade: { cor: "bg-success/15 text-success", icon: Heart },
-};
-
-const eventosIniciais: Evento[] = [
-  { id: "e1", dia: 15, titulo: "Consulta Cardio — Maria A.", tipo: "consulta" },
-  { id: "e2", dia: 15, titulo: "Aniversário — José C.", tipo: "aniversario" },
-  { id: "e3", dia: 18, titulo: "Neurologia — Luzia F.", tipo: "consulta" },
-  { id: "e4", dia: 20, titulo: "Dia da Família", tipo: "comemorativa" },
-  { id: "e5", dia: 25, titulo: "Sessão de música ao vivo", tipo: "atividade" },
+const tipos = [
+  { value: "Consulta", label: "Consulta" },
+  { value: "Aniversário", label: "Aniversário" },
+  { value: "Data comemorativa", label: "Data comemorativa" },
+  { value: "Atividade", label: "Atividade" },
 ];
+
+type Evento = { id: string; data: string; hora: string; titulo: string; tipo: string };
+
+const estilos: Record<string, { cor: string; icon: typeof CalendarCheck }> = {
+  Consulta: { cor: "bg-primary/10 text-primary", icon: CalendarCheck },
+  "Aniversário": { cor: "bg-warning/15 text-warning", icon: Cake },
+  "Data comemorativa": { cor: "bg-secondary/15 text-secondary", icon: PartyPopper },
+  Atividade: { cor: "bg-success/15 text-success", icon: Heart },
+};
+const estiloOutro = { cor: "bg-muted text-muted-foreground", icon: Tag };
+
+function diaDoMes(d: number) {
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth(), d).toISOString().slice(0, 10);
+}
 
 function CalendarioPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [open, setOpen] = useState(false);
-  const [eventos, setEventos] = useState<Evento[]>(eventosIniciais);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [eventos, setEventos] = useState<Evento[]>(() => [
+    { id: "e1", data: diaDoMes(15), hora: "09:00", titulo: "Consulta Cardio — Maria A.", tipo: "Consulta" },
+    { id: "e2", data: diaDoMes(15), hora: "", titulo: "Aniversário — José C.", tipo: "Aniversário" },
+    { id: "e3", data: diaDoMes(18), hora: "14:00", titulo: "Neurologia — Luzia F.", tipo: "Consulta" },
+    { id: "e4", data: diaDoMes(20), hora: "", titulo: "Dia da Família", tipo: "Data comemorativa" },
+    { id: "e5", data: diaDoMes(25), hora: "16:00", titulo: "Sessão de música ao vivo", tipo: "Atividade" },
+  ]);
+  const [titulo, setTitulo] = useState("");
+  const [data, setData] = useState("");
+  const [hora, setHora] = useState("");
+  const [tipo, setTipo] = useState("Atividade");
+  const [tipoOutro, setTipoOutro] = useState("");
+
+  function abrir(ev?: Evento) {
+    setEditId(ev?.id ?? null);
+    setTitulo(ev?.titulo ?? "");
+    setData(ev?.data ?? (date ? date.toISOString().slice(0, 10) : todayISO()));
+    setHora(ev?.hora ?? "");
+    const s = splitOtherValue(ev?.tipo ?? "Atividade", tipos.map((t) => t.value));
+    setTipo(s.value);
+    setTipoOutro(s.otherValue);
+    setOpen(true);
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const dataStr = String(f.get("data") || "");
-    const d = dataStr ? new Date(dataStr) : new Date();
-    const novo: Evento = {
-      id: crypto.randomUUID(),
-      dia: d.getDate(),
-      titulo: String(f.get("titulo") || ""),
-      tipo: (f.get("tipo") as EventoTipo) || "atividade",
-    };
-    setEventos((p) => [...p, novo].sort((a, b) => a.dia - b.dia));
+    const tipoFinal = resolveOtherValue(tipo, tipoOutro).trim();
+    if (!titulo.trim()) return toast.error("Informe o título");
+    if (!data) return toast.error("Informe uma data válida");
+    if (!tipoFinal) return toast.error("Especifique o tipo");
+    const ev: Evento = { id: editId ?? crypto.randomUUID(), titulo: titulo.trim(), data, hora, tipo: tipoFinal };
+    setEventos((p) =>
+      (editId ? p.map((x) => (x.id === editId ? ev : x)) : [...p, ev]).sort((a, b) =>
+        (a.data + a.hora).localeCompare(b.data + b.hora),
+      ),
+    );
     setOpen(false);
-    toast.success("Evento adicionado ao calendário");
+    toast.success(editId ? "Evento atualizado" : "Evento adicionado ao calendário");
   }
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Calendário"
-        description="Visão mensal de eventos, consultas e datas comemorativas."
+        description="Visão mensal de eventos. Use o ícone do Google para enviar um evento à sua agenda Google."
         actions={
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-1 h-4 w-4" /> Nova atividade
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Nova atividade no calendário</DialogTitle>
-                <DialogDescription>Cadastre um evento, consulta ou data comemorativa.</DialogDescription>
-              </DialogHeader>
-              <form className="grid grid-cols-1 gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="titulo">Título</Label>
-                  <Input id="titulo" name="titulo" required placeholder="Ex: Consulta Cardio" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="data">Data</Label>
-                  <Input
-                    id="data"
-                    name="data"
-                    type="date"
-                    required
-                    defaultValue={(date ?? new Date()).toISOString().slice(0, 10)}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Tipo</Label>
-                  <Select name="tipo" defaultValue="atividade">
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="consulta">Consulta</SelectItem>
-                      <SelectItem value="aniversario">Aniversário</SelectItem>
-                      <SelectItem value="comemorativa">Data comemorativa</SelectItem>
-                      <SelectItem value="atividade">Atividade</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <DialogFooter className="sm:col-span-2">
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-                  <Button type="submit"><Plus className="mr-1 h-4 w-4" /> Adicionar</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => abrir()}>
+            <Plus className="mr-1 h-4 w-4" /> Nova atividade
+          </Button>
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editId ? "Editar atividade" : "Nova atividade no calendário"}</DialogTitle>
+            <DialogDescription>Cadastre um evento, consulta ou data comemorativa.</DialogDescription>
+          </DialogHeader>
+          <form className="grid grid-cols-1 gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="titulo">Título</Label>
+              <Input id="titulo" value={titulo} onChange={(e) => setTitulo(e.target.value)} required />
+            </div>
+            <DateFieldBR key={editId ?? "novo" + open} value={data} onChange={setData} required />
+            <div className="space-y-1.5">
+              <Label htmlFor="hora">Hora (opcional)</Label>
+              <Input id="hora" type="time" value={hora} onChange={(e) => setHora(e.target.value)} />
+            </div>
+            <div className="sm:col-span-2">
+              <OtherSelect
+                label="Tipo"
+                options={tipos}
+                value={tipo}
+                otherValue={tipoOutro}
+                onValueChange={setTipo}
+                onOtherValueChange={setTipoOutro}
+                required
+              />
+            </div>
+            <DialogFooter className="sm:col-span-2">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+              <Button type="submit">{editId ? "Salvar alterações" : "Adicionar"}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         <Card className="shadow-soft">
           <CardHeader><CardTitle>Mês atual</CardTitle></CardHeader>
           <CardContent>
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              className="pointer-events-auto w-full"
-            />
+            <Calendar mode="single" selected={date} onSelect={setDate} className="pointer-events-auto w-full" />
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
               <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">Consultas</Badge>
               <Badge variant="outline" className="border-warning/30 bg-warning/15 text-warning">Aniversários</Badge>
@@ -159,7 +168,7 @@ function CalendarioPage() {
           <CardHeader><CardTitle className="text-base">Próximos eventos</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             {eventos.map((e) => {
-              const s = estilos[e.tipo];
+              const s = estilos[e.tipo] ?? estiloOutro;
               const Icon = s.icon;
               return (
                 <div key={e.id} className="flex items-start gap-3 border-b pb-3 last:border-0 last:pb-0">
@@ -168,8 +177,22 @@ function CalendarioPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{e.titulo}</p>
-                    <p className="text-xs text-muted-foreground">Dia {e.dia}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {toBRDate(e.data)} {e.hora && `• ${e.hora}`} • {e.tipo}
+                    </p>
                   </div>
+                  <Button size="icon" variant="ghost" aria-label="Editar" onClick={() => abrir(e)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button size="icon" variant="ghost" aria-label="Enviar ao Google Calendar" asChild>
+                    <a
+                      href={googleCalendarUrl({ titulo: e.titulo, dataISO: e.data, hora: e.hora || undefined, detalhes: e.tipo })}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <CalendarPlus className="h-4 w-4" />
+                    </a>
+                  </Button>
                 </div>
               );
             })}
