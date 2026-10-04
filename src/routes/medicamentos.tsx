@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Bell, Pill, Plus } from "lucide-react";
+import { Bell, Pencil, Pill, Plus } from "lucide-react";
+import { OtherSelect, resolveOtherValue, splitOtherValue } from "@/components/other-select";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
@@ -54,30 +55,55 @@ const timeline = [
   { hora: "21:00", med: "Donepezila 10mg", idoso: "Antônia Pereira", status: "Pendente" },
 ];
 
+const VIAS = ["Oral", "Subcutânea", "Intramuscular", "Tópica"];
+const STATUS = ["Ativo", "Suspenso"];
+
 function MedicamentosPage() {
   const [open, setOpen] = useState(false);
   const [lista, setLista] = useState<Medicamento[]>(seed);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [idoso, setIdoso] = useState("");
+  const [nome, setNome] = useState("");
+  const [dosagem, setDosagem] = useState("");
+  const [frequencia, setFrequencia] = useState("");
+  const [horarios, setHorarios] = useState("");
+  const [via, setVia] = useState("Oral");
+  const [viaOutro, setViaOutro] = useState("");
+  const [status, setStatus] = useState("Ativo");
+
+  function abrirNovo() {
+    setEditId(null); setIdoso(""); setNome(""); setDosagem(""); setFrequencia("");
+    setHorarios(""); setVia("Oral"); setViaOutro(""); setStatus("Ativo"); setOpen(true);
+  }
+
+  function abrirEdicao(m: Medicamento) {
+    const v = splitOtherValue(m.via, VIAS);
+    setEditId(m.id); setIdoso(m.idoso); setNome(m.nome); setDosagem(m.dosagem);
+    setFrequencia(m.frequencia); setHorarios(m.horarios.join(", "));
+    setVia(v.value); setViaOutro(v.otherValue); setStatus(m.status); setOpen(true);
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const horarios = String(f.get("horarios") || "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    const novo: Medicamento = {
-      id: crypto.randomUUID(),
-      nome: String(f.get("nome") || ""),
-      dosagem: String(f.get("dosagem") || ""),
-      frequencia: String(f.get("frequencia") || ""),
-      horarios,
-      via: String(f.get("via") || "Oral"),
-      status: "Ativo",
-      idoso: String(f.get("idoso") || ""),
-    };
-    setLista((p) => [novo, ...p]);
+    if (!idoso) return toast.error("Selecione o idoso");
+    if (!nome.trim() || !dosagem.trim()) return toast.error("Preencha medicamento e dosagem");
+    const viaFinal = resolveOtherValue(via, viaOutro).trim();
+    if (!viaFinal) return toast.error("Especifique a via");
+    const hs = horarios.split(",").map((s) => s.trim()).filter(Boolean);
+    if (hs.some((h) => !/^([01]\d|2[0-3]):[0-5]\d$/.test(h)))
+      return toast.error("Horários inválidos. Use HH:MM, separados por vírgula");
+    const dados = {
+      nome: nome.trim(), dosagem: dosagem.trim(), frequencia: frequencia.trim(),
+      horarios: hs, via: viaFinal, status, idoso,
+    } as Omit<Medicamento, "id">;
+    if (editId) {
+      setLista((p) => p.map((m) => (m.id === editId ? { ...m, ...dados } : m)));
+      toast.success("Medicamento atualizado");
+    } else {
+      setLista((p) => [{ id: crypto.randomUUID(), ...dados }, ...p]);
+      toast.success("Medicamento cadastrado");
+    }
     setOpen(false);
-    toast.success("Medicamento cadastrado");
   }
 
   return (
@@ -87,20 +113,18 @@ function MedicamentosPage() {
         description="Prescrições ativas e controle de administração."
         actions={
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-1 h-4 w-4" /> Novo medicamento
-              </Button>
-            </DialogTrigger>
+            <Button onClick={abrirNovo}>
+              <Plus className="mr-1 h-4 w-4" /> Novo medicamento
+            </Button>
             <DialogContent className="max-w-xl">
               <DialogHeader>
-                <DialogTitle>Cadastrar medicamento</DialogTitle>
-                <DialogDescription>Adicione uma prescrição ao plano de medicação.</DialogDescription>
+                <DialogTitle>{editId ? "Editar medicamento" : "Cadastrar medicamento"}</DialogTitle>
+                <DialogDescription>Adicione ou atualize uma prescrição.</DialogDescription>
               </DialogHeader>
               <form className="grid grid-cols-1 gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label>Idoso</Label>
-                  <Select name="idoso" required>
+                  <Label>Idoso *</Label>
+                  <Select value={idoso} onValueChange={setIdoso}>
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
                       {idosos.map((i) => (
@@ -110,42 +134,51 @@ function MedicamentosPage() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="nome">Medicamento</Label>
-                  <Input id="nome" name="nome" required placeholder="Ex: Losartana" />
+                  <Label htmlFor="nome">Medicamento *</Label>
+                  <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} required placeholder="Ex: Losartana" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="dosagem">Dosagem</Label>
-                  <Input id="dosagem" name="dosagem" required placeholder="Ex: 50mg" />
+                  <Label htmlFor="dosagem">Dosagem *</Label>
+                  <Input id="dosagem" value={dosagem} onChange={(e) => setDosagem(e.target.value)} required placeholder="Ex: 50mg" />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="frequencia">Frequência</Label>
-                  <Input id="frequencia" name="frequencia" placeholder="Ex: 12/12h" />
+                  <Input id="frequencia" value={frequencia} onChange={(e) => setFrequencia(e.target.value)} placeholder="Ex: 12/12h" />
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="via">Via</Label>
-                  <Select name="via" defaultValue="Oral">
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Oral">Oral</SelectItem>
-                      <SelectItem value="Subcutânea">Subcutânea</SelectItem>
-                      <SelectItem value="Intramuscular">Intramuscular</SelectItem>
-                      <SelectItem value="Tópica">Tópica</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <OtherSelect
+                  label="Via"
+                  options={VIAS.map((v) => ({ value: v, label: v }))}
+                  value={via}
+                  otherValue={viaOutro}
+                  onValueChange={setVia}
+                  onOtherValueChange={setViaOutro}
+                  required
+                />
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label htmlFor="horarios">Horários (separados por vírgula)</Label>
-                  <Input id="horarios" name="horarios" placeholder="08:00, 20:00" />
+                  <Input id="horarios" value={horarios} onChange={(e) => setHorarios(e.target.value)} placeholder="08:00, 20:00" />
                 </div>
+                {editId && (
+                  <div className="space-y-1.5">
+                    <Label>Status</Label>
+                    <Select value={status} onValueChange={setStatus}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {STATUS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <DialogFooter className="sm:col-span-2">
                   <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-                  <Button type="submit"><Plus className="mr-1 h-4 w-4" /> Cadastrar</Button>
+                  <Button type="submit">{editId ? "Salvar alterações" : <><Plus className="mr-1 h-4 w-4" /> Cadastrar</>}</Button>
                 </DialogFooter>
               </form>
             </DialogContent>
           </Dialog>
         }
       />
+
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {timeline.filter((t) => t.status === "Pendente").slice(0, 3).map((t, i) => (
@@ -178,6 +211,7 @@ function MedicamentosPage() {
                   <TableHead>Frequência</TableHead>
                   <TableHead>Horários</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -195,6 +229,11 @@ function MedicamentosPage() {
                     <TableCell className="text-sm text-muted-foreground">{m.horarios.join(", ")}</TableCell>
                     <TableCell>
                       <Badge variant={m.status === "Ativo" ? "default" : "outline"}>{m.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button size="sm" variant="ghost" onClick={() => abrirEdicao(m)}>
+                        <Pencil className="mr-1 h-3.5 w-3.5" /> Editar
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
