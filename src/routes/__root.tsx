@@ -133,7 +133,7 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-const PUBLIC_ROUTES = new Set(["/auth", "/sobre"]);
+const PUBLIC_ROUTES = new Set(["/auth", "/sobre", "/reset-password"]);
 
 function AuthGate({ children }: { children: ReactNode }) {
   const { session, profile, loading, signOut } = useAuth();
