@@ -39,7 +39,7 @@ import { idosos, medicamentos as seed, type Medicamento } from "@/lib/mock-data"
 export const Route = createFileRoute("/medicamentos")({
   head: () => ({
     meta: [
-      { title: "Medicamentos — CareSenior" },
+      { title: "Medicamentos — SAMI" },
       { name: "description", content: "Prescrições, horários e timeline de administração." },
     ],
   }),

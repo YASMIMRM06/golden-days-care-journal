@@ -38,20 +38,20 @@ import {
 import { documentos as seed, idosos, type Documento } from "@/lib/mock-data";
 
 const DELETE_PASSWORD = "sami2026";
-const CATEGORIAS: Documento["categoria"][] = ["RG", "CPF", "Convênio", "Receitas", "Procurações"];
+const CATEGORIAS: string[] = ["RG", "CPF", "Convênio", "Receitas", "Procurações"];
 
 type PendingUpload = {
   file: File;
   nome: string;
-  categoria: Documento["categoria"];
+  categoria: string;
+  outro: string;
   idoso: string;
 };
-
 
 export const Route = createFileRoute("/documentos")({
   head: () => ({
     meta: [
-      { title: "Documentos — CareSenior" },
+      { title: "Documentos — SAMI" },
       { name: "description", content: "Gestão de documentos: RG, CPF, convênios, receitas e procurações." },
     ],
   }),
@@ -80,7 +80,8 @@ function DocumentosPage() {
       Array.from(files).map((f) => ({
         file: f,
         nome: f.name,
-        categoria: "Receitas" as Documento["categoria"],
+        categoria: "Receitas",
+        outro: "",
         idoso: idosos[0]?.nome ?? "—",
       })),
     );
@@ -92,10 +93,14 @@ function DocumentosPage() {
 
   function confirmUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (pendentes.some((p) => !resolveOtherValue(p.categoria, p.outro).trim())) {
+      toast.error("Especifique o tipo de documento");
+      return;
+    }
     const novos: Documento[] = pendentes.map((p) => ({
       id: crypto.randomUUID(),
       nome: p.nome.trim() || p.file.name,
-      categoria: p.categoria,
+      categoria: resolveOtherValue(p.categoria, p.outro).trim(),
       tamanho: formatSize(p.file.size),
       data: new Date().toISOString().slice(0, 10),
       idoso: p.idoso,
@@ -311,20 +316,15 @@ function DocumentosPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label>Tipo de documento</Label>
-                    <Select
-                      value={p.categoria}
-                      onValueChange={(v) => updatePendente(i, { categoria: v as Documento["categoria"] })}
-                    >
-                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                      <SelectContent>
-                        {CATEGORIAS.map((c) => (
-                          <SelectItem key={c} value={c}>{c}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <OtherSelect
+                    label="Tipo de documento"
+                    options={CATEGORIAS.map((c) => ({ value: c, label: c }))}
+                    value={p.categoria}
+                    otherValue={p.outro}
+                    onValueChange={(v) => updatePendente(i, { categoria: v })}
+                    onOtherValueChange={(v) => updatePendente(i, { outro: v })}
+                    required
+                  />
                 </div>
               </div>
             ))}
