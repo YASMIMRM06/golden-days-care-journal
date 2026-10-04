@@ -37,7 +37,7 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Dashboard — CareSenior" },
+      { title: "Dashboard — SAMI" },
       { name: "description", content: "Visão geral do dia: idosos, medicamentos, consultas e ocorrências." },
     ],
   }),

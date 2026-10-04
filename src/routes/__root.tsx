@@ -48,7 +48,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: import("@tanstack/react-router").ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
@@ -133,7 +133,7 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-const PUBLIC_ROUTES = new Set(["/auth", "/sobre"]);
+const PUBLIC_ROUTES = new Set(["/auth", "/sobre", "/reset-password"]);
 
 function AuthGate({ children }: { children: ReactNode }) {
   const { session, profile, loading, signOut } = useAuth();
