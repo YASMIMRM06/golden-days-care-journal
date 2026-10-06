@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791286932061,
+      "tag": "0000_feeding_and_exams",
+      "breakpoints": true
+    }
+  ]
+}

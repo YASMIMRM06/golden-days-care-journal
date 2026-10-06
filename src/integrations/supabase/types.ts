@@ -14,6 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
+      feeding_records: {
+        Row: {
+          administracao: string
+          created_at: string
+          created_by: string | null
+          data_fim: string | null
+          data_inicio: string | null
+          formula: string
+          frequencia: string
+          horario: string
+          id: string
+          idoso_id: string
+          idoso_nome: string
+          observacoes: string
+          quantidade_ml: number | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          administracao?: string
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          formula?: string
+          frequencia?: string
+          horario?: string
+          id?: string
+          idoso_id: string
+          idoso_nome?: string
+          observacoes?: string
+          quantidade_ml?: number | null
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          administracao?: string
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          formula?: string
+          frequencia?: string
+          horario?: string
+          id?: string
+          idoso_id?: string
+          idoso_nome?: string
+          observacoes?: string
+          quantidade_ml?: number | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      medical_exams: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_exame: string | null
+          descricao: string
+          file_name: string
+          file_path: string
+          id: string
+          idoso_id: string
+          mime_type: string
+          nome: string
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_exame?: string | null
+          descricao?: string
+          file_name: string
+          file_path: string
+          id?: string
+          idoso_id: string
+          mime_type?: string
+          nome: string
+          tipo?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_exame?: string | null
+          descricao?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          idoso_id?: string
+          mime_type?: string
+          nome?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
       platform_facts: {
         Row: {
           content: string
@@ -113,6 +209,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_approved: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
