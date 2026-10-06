@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Bell, Pencil, Pill, Plus } from "lucide-react";
 import { OtherSelect, resolveOtherValue, splitOtherValue } from "@/components/other-select";
+import { AlimentacaoSection } from "@/components/alimentacao-section";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
@@ -220,6 +221,7 @@ function MedicamentosPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Pill className="h-4 w-4 text-primary" />
+                        <Badge variant="outline">Medicamento</Badge>
                         <span className="font-medium">{m.nome}</span>
                       </div>
                     </TableCell>
@@ -242,6 +244,8 @@ function MedicamentosPage() {
           </div>
         </CardContent>
       </Card>
+
+      <AlimentacaoSection />
 
       <Card className="shadow-soft">
         <CardHeader><CardTitle>Timeline de administração — hoje</CardTitle></CardHeader>

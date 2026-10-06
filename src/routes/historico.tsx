@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DateFieldBR } from "@/components/date-field";
+import { ExamesSection } from "@/components/exames-section";
 import { historicoMedico } from "@/lib/mock-data";
 import { toBRDate, toISODate, todayISO } from "@/lib/date-utils";
 
@@ -204,6 +205,8 @@ function HistoricoPage() {
           </Tabs>
         </CardContent>
       </Card>
+
+      <ExamesSection />
     </div>
   );
 }
