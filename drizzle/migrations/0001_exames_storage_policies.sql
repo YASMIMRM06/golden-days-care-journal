@@ -1,0 +1,3 @@
+CREATE POLICY "Approved read exames" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'exames' AND public.is_approved(auth.uid()));
+CREATE POLICY "Approved upload exames" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'exames' AND public.is_approved(auth.uid()));
+CREATE POLICY "Approved delete exames" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'exames' AND public.is_approved(auth.uid()));
