@@ -1,7 +1,8 @@
 # SAMI — Roadmap de ajustes
 
 ## Integração dos registros reais
-- [ ] Conectar todas as telas, seletores, notificações e arquivos aos registros persistentes conforme o arquivo enviado. Bloqueio: o banco conectado ainda contém apenas cinco tabelas; as doze tabelas novas e as três views informadas não existem nele.
+- [ ] Criar aqui as doze tabelas novas e as três views informadas; o banco conectado contém apenas cinco tabelas antigas.
+- [ ] Conectar todas as telas, seletores, notificações e arquivos aos registros persistentes conforme o arquivo enviado.
 - [ ] Aplicar as regras de vínculo por UUID, inativação e reativação, responsáveis aprovados, arquivos privados e cadastro sem cargo Médico junto à integração.
 - [ ] Testar gravação, edição e leitura após recarregar com usuário autenticado.
 
